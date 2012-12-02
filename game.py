@@ -44,7 +44,7 @@ def is_set(cards):
 
 def search_set(cards):
     sets = []
-    if len(cards) < set_number: return sets     
+    if len(cards) < set_number: return sets
     for multiplet in itertools.combinations(cards, set_number):
         if is_set(multiplet): sets.append(multiplet)
     return sets
@@ -133,7 +133,7 @@ while sets or deck:
         #draw_card_slot(card)
         col_counter += 1
     pygame.display.update()
-    draw_ordered_slots(cards)       
+    draw_ordered_slots(cards)
 
     # search set
     print 'sets:'
@@ -143,8 +143,6 @@ while sets or deck:
     for node in sets:
         draw_set_text(node)
     ordered_sets(sets)
-
-    if sets: chosen_set = random.choice(sets)
 
     graph = graph_generator(cards)
 
@@ -159,19 +157,25 @@ while sets or deck:
     print disjointed
 
     replacement = take_cards(deck, number_of_cards)
-    if sets and replacement and len(cards) <= initial_number_of_cards:
-        replacements_list = zip(chosen_set, replacement)
-        for (replaceable, replacing) in replacements_list:
-            cards[cards.index(replaceable)] = replacing
-    if sets and (not replacement or len(cards) > initial_number_of_cards):
-        for card in chosen_set:
-            cards.remove(card)
-    if not sets and replacement:
-        cards.extend(replacement)
+    if sets:
+        chosen_set = random.choice(sets)
+        if replacement and len(cards) <= initial_number_of_cards:
+            replacements_list = zip(chosen_set, replacement)
+            for (replaceable, replacing) in replacements_list:
+                cards[cards.index(replaceable)] = replacing
+        else:
+            for card in chosen_set:
+                cards.remove(card)
+    else:
+        if replacement:
+            cards.extend(replacement)
+        else:
+            print 'game over'
+            break
     while raw_input():
         pass
 
-''' 
+'''
 is_break = False
 while not is_break:
     for event in pygame.event.get():

@@ -17,7 +17,7 @@ def draw_card(card, screen, position):
     vocabulary = {'one': 1, 'two': 2, 'three': 3}
     n = vocabulary[card['number']]
     offset = -(delta * (n - 1))/2
-    
+
     (x, y) = position
     center = (card_center[0] - size[0]/2 + x, card_center[1] - size[1]/2 + y)
     for i in range(n):

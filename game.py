@@ -96,8 +96,6 @@ deck = deck_generator()
 #print len(deck)
 
 # max number of sets is 27
-#graph = graph_generator(deck)
-#print topology_sort(graph)
 
 # deck shuffle
 print 'shuffling deck'
@@ -109,12 +107,11 @@ pygame.init()
 
 # game loop
 sets = []
-
 # pick up cards
-
 initial_number_of_cards = 4 * set_number
 cards = take_cards(deck, initial_number_of_cards)
 while sets or deck:
+    print u'\033[2J'
     #print 'deck: %d' % len(deck)
     number_of_cards = set_number
 
@@ -140,8 +137,6 @@ while sets or deck:
     sets = search_set(cards)
     #print sets
     #print 'number of sets: %d' % len(sets)
-    for node in sets:
-        draw_set_text(node)
     ordered_sets(sets)
 
     graph = graph_generator(cards)
@@ -152,9 +147,8 @@ while sets or deck:
     print topology
 
     # searching disjoint sets
-    print 'disjointed sets:'
     disjointed = topology_sort(graph)
-    print disjointed
+    print 'disjointed sets: %d' % disjointed
 
     replacement = take_cards(deck, number_of_cards)
     if sets:

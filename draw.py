@@ -1,7 +1,7 @@
 import pygame
 from patterns import *
 
-def draw_card(card, screen, position):
+def draw_card(card, screen, position, is_selected):
     images_dir = 'images'
     filename = '_'.join((card['symbol'], card['shading'], card['color'],))
     fullname = '%s/%s.png' % (images_dir, filename)
@@ -12,6 +12,18 @@ def draw_card(card, screen, position):
     height = 117
     card_size = (width, height)
     card_center = map(lambda (x): x/2 , card_size)
+
+    # selection
+    backlight_surface = pygame.surface.Surface(card_size)
+    if is_selected:
+        color = (255, 255, 0)
+    else:
+        color = (255, 255, 255)
+
+    (x, y) = position
+    rectangle = pygame.Rect(0, 0, width, height)
+    pygame.draw.rect(backlight_surface, color, rectangle)
+    screen.blit(backlight_surface, position)
 
     delta = 33
     vocabulary = {'one': 1, 'two': 2, 'three': 3}
@@ -24,6 +36,30 @@ def draw_card(card, screen, position):
         position = (center[0], center[1] + offset, center[0] + size[0], center[1] + size[1] + offset)
         screen.blit(simple_image, position)
         offset += delta
+
+def visualize(cards, field_state):
+    # pygame screen
+    width = 90
+    height = 117
+    rows = set_number
+    cols = len(cards) / rows
+    screen = pygame.display.set_mode((width * cols, height * rows))
+    screen.fill((255, 255, 255))
+
+    counter = 0
+    for card in cards:
+        position = ((counter % cols) * width, (counter / cols) * height)
+        if not field_state['slots'].has_key(counter):
+            field_state['slots'][counter] = {'card': card, 'position': position}
+        if counter in field_state['selected']:
+            is_selected = True
+        else:
+            is_selected = False
+        draw_card(card, screen, position, is_selected)
+        counter += 1
+
+    pygame.display.update()
+    return field_state
 
 def draw_card_text(card):
     card_width = 5

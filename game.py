@@ -174,8 +174,8 @@ while sets or deck:
 
     chosen_set = interaction(cards)
     replacement = take_cards(deck, set_number)
+
     if sets and chosen_set:
-        #chosen_set = random.choice(sets)
         if replacement and len(cards) <= initial_number_of_cards:
             replacements_list = zip(chosen_set, replacement)
             for (replaceable, replacing) in replacements_list:
@@ -185,7 +185,11 @@ while sets or deck:
                 cards.remove(card)
     else:
         if replacement:
-            cards.extend(replacement)
-        else:
-            print 'game over'
-            break
+            cols = len(cards) / set_number
+            index = 1
+            for inserted in replacement:
+                cards.insert(index * (cols + 1) - 1, inserted)
+                index += 1
+    if not sets and not replacement:
+        print 'game over'
+        break

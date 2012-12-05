@@ -44,6 +44,7 @@ def visualize(cards, field_state):
     rows = set_number
     cols = len(cards) / rows
     screen = pygame.display.set_mode((width * cols, height * rows))
+    pygame.display.set_caption('set')
     screen.fill((255, 255, 255))
 
     counter = 0

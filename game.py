@@ -1,3 +1,4 @@
+import time
 import pygame
 import random
 import itertools
@@ -97,8 +98,10 @@ def interaction(cards):
     is_break = False
     field_state = {'slots': {}, 'selected': []}
     chosen_set = None
+    pygame.event.set_blocked([KEYDOWN, KEYUP, MOUSEMOTION, ACTIVEEVENT])
+    slots = visualize(cards, field_state)
     while not is_break:
-        slots = visualize(cards, field_state)
+        time.sleep(0.2)
         for event in pygame.event.get():
             if event.type == QUIT:
                 exit()
@@ -112,9 +115,11 @@ def interaction(cards):
                         if v <= x_pos < v + width and h <= y_pos < h + height:
                             if key in field_state['selected']:
                                 field_state['selected'].remove(key)
+                                visualize(cards, field_state)
                             else:
                                 if len(field_state['selected']) < set_number:
                                     field_state['selected'].append(key)
+                                    visualize(cards, field_state)
                                 if len(field_state['selected']) == set_number:
                                     selected_cards = []
                                     for number in field_state['selected']:

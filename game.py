@@ -98,10 +98,12 @@ def interaction(cards):
     is_break = False
     field_state = {'slots': {}, 'selected': []}
     chosen_set = None
-    pygame.event.set_blocked([KEYDOWN, KEYUP, MOUSEMOTION, ACTIVEEVENT, MOUSEBUTTONUP])
+    pygame.event.set_blocked(None)
+    pygame.event.set_allowed([MOUSEBUTTONDOWN, QUIT])
     slots = visualize(cards, field_state)
     while not is_break:
         event = pygame.event.wait()
+        print event
         if event.type == QUIT:
             exit()
         elif event.type == MOUSEBUTTONDOWN:

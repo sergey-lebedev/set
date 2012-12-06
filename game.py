@@ -103,7 +103,6 @@ def interaction(cards):
     slots = visualize(cards, field_state)
     while not is_break:
         event = pygame.event.wait()
-        print event
         if event.type == QUIT:
             exit()
         elif event.type == MOUSEBUTTONDOWN:

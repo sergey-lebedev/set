@@ -128,6 +128,8 @@ def interaction(cards):
                                     chosen_set = selected_cards
                                     is_break = True
                                     break
+            if event.button == 2:
+                exit()
             if event.button == 3:
                 is_break = True
                 break

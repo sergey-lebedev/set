@@ -15,29 +15,26 @@ def draw_card(card, screen, position, is_selected):
 
     # selection
     frame = pygame.surface.Surface(card_size)
-    if is_selected:
-        color = (255, 255, 0)
-    else:
-        color = (255, 255, 255)
-
     frame.fill((255, 255, 255))
-    (x, y) = position
-    a = 6
-    b = 5
-    dx = 1
-    dy = 1
-    vertical_rectangle = pygame.Rect(dx + a, dy, width - 2*(dx + a), height - 2*dy)
-    horizontal_rectangle = pygame.Rect(dx, dy + b, width - 2*dx, height - 2*(dy + b))
-    left_up_ellipse = (dx, dy, 2*a, 2*b)
-    right_up_ellipse = (width - (2*a + dx), dy, 2*a, 2*b)
-    left_down_ellipse = (dx, height - (2*b + dy), 2*a, 2*b)
-    right_down_ellipse = (width - (2*a + dx), height - (2*b + dy), 2*a, 2*b)
-    pygame.draw.rect(frame, color, vertical_rectangle)
-    pygame.draw.rect(frame, color, horizontal_rectangle)
-    pygame.draw.ellipse(frame, color, left_up_ellipse)
-    pygame.draw.ellipse(frame, color, right_up_ellipse)
-    pygame.draw.ellipse(frame, color, left_down_ellipse)
-    pygame.draw.ellipse(frame, color, right_down_ellipse)
+    if is_selected:
+        a = 6
+        b = 5
+        dx = 1
+        dy = 1
+        (x, y) = position
+        color = (255, 255, 0)
+        left_up_ellipse = (dx, dy, 2*a, 2*b)
+        right_up_ellipse = (width - (2*a + dx), dy, 2*a, 2*b)
+        left_down_ellipse = (dx, height - (2*b + dy), 2*a, 2*b)
+        right_down_ellipse = (width - (2*a + dx), height - (2*b + dy), 2*a, 2*b)
+        vertical_rectangle = pygame.Rect(dx + a, dy, width - 2*(dx + a), height - 2*dy)
+        horizontal_rectangle = pygame.Rect(dx, dy + b, width - 2*dx, height - 2*(dy + b))
+        pygame.draw.rect(frame, color, vertical_rectangle)
+        pygame.draw.rect(frame, color, horizontal_rectangle)
+        pygame.draw.ellipse(frame, color, left_up_ellipse)
+        pygame.draw.ellipse(frame, color, right_up_ellipse)
+        pygame.draw.ellipse(frame, color, left_down_ellipse)
+        pygame.draw.ellipse(frame, color, right_down_ellipse)
     screen.blit(frame, position)
 
     delta = 33
@@ -120,8 +117,14 @@ def draw_set_text(node):
 def ordered_sets(sets):
     texts = [draw_set_text(node).split('\n') for node in sets]
     horisontal_space = ' '
-    string_list = [horisontal_space.join(string) for string in zip(*texts)]
-    strings = '\n'.join(string_list)
+    limit = 10
+    counter = 0
+    strings = ''
+    while counter < len(sets):
+        string_list = [horisontal_space.join(string) for string in zip(*texts[counter:counter + limit])]
+        limited_strings = '\n'.join(string_list)
+        strings = '\n'.join((strings, limited_strings))
+        counter += limit
     print strings
     return strings
 
@@ -139,10 +142,17 @@ def draw_ordered_slots(cards):
     rows = 3
     cols = len(cards) / rows
     slots_text = ''
-    for i in range(rows):
-        slots_texts = [draw_card_slot(card).split('\n') for card in cards[i*cols: (i + 1) * cols]]
-        horisontal_space = ' '
-        slots_list = [horisontal_space.join(string) for string in zip(*slots_texts)]
-        slots_text += '\n'.join(slots_list) + '\n'
+    limit = 10
+    counter = 0
+    while counter < cols:
+        limited_slots_text = ''
+        for i in range(rows):
+            cards_slice = cards[i*cols + counter: i*cols + min(counter + limit, cols)]
+            slots_texts = [draw_card_slot(card).split('\n') for card in cards_slice]
+            horisontal_space = ' '
+            slots_list = [horisontal_space.join(string) for string in zip(*slots_texts)]
+            limited_slots_text += '\n'.join(slots_list) + '\n'
+        slots_text += limited_slots_text
+        counter += limit
     print slots_text
     return slots_text

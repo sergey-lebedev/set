@@ -14,16 +14,31 @@ def draw_card(card, screen, position, is_selected):
     card_center = map(lambda (x): x/2 , card_size)
 
     # selection
-    backlight_surface = pygame.surface.Surface(card_size)
+    frame = pygame.surface.Surface(card_size)
     if is_selected:
         color = (255, 255, 0)
     else:
         color = (255, 255, 255)
 
+    frame.fill((255, 255, 255))
     (x, y) = position
-    rectangle = pygame.Rect(0, 0, width, height)
-    pygame.draw.rect(backlight_surface, color, rectangle)
-    screen.blit(backlight_surface, position)
+    a = 6
+    b = 5
+    dx = 1
+    dy = 1
+    vertical_rectangle = pygame.Rect(dx + a, dy, width - 2*(dx + a), height - 2*dy)
+    horizontal_rectangle = pygame.Rect(dx, dy + b, width - 2*dx, height - 2*(dy + b))
+    left_up_ellipse = (dx, dy, 2*a, 2*b)
+    right_up_ellipse = (width - (2*a + dx), dy, 2*a, 2*b)
+    left_down_ellipse = (dx, height - (2*b + dy), 2*a, 2*b)
+    right_down_ellipse = (width - (2*a + dx), height - (2*b + dy), 2*a, 2*b)
+    pygame.draw.rect(frame, color, vertical_rectangle)
+    pygame.draw.rect(frame, color, horizontal_rectangle)
+    pygame.draw.ellipse(frame, color, left_up_ellipse)
+    pygame.draw.ellipse(frame, color, right_up_ellipse)
+    pygame.draw.ellipse(frame, color, left_down_ellipse)
+    pygame.draw.ellipse(frame, color, right_down_ellipse)
+    screen.blit(frame, position)
 
     delta = 33
     vocabulary = {'one': 1, 'two': 2, 'three': 3}

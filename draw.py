@@ -119,7 +119,8 @@ def ordered_sets(sets):
     horisontal_space = ' '
     limit = 10
     counter = 0
-    strings = ''
+    strings = None
+    if sets: strings = ''
     while counter < len(sets):
         string_list = [horisontal_space.join(string) for string in zip(*texts[counter:counter + limit])]
         limited_strings = '\n'.join(string_list)

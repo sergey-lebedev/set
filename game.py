@@ -155,7 +155,7 @@ sets = []
 # pick up cards
 initial_number_of_cards = 4 * set_number
 cards = take_cards(deck, initial_number_of_cards)
-while sets or deck:
+while cards or deck:
     print u'\033[2J'
     #print '%d cards in a deck' % len(deck)
 
@@ -166,7 +166,7 @@ while sets or deck:
     draw_ordered_slots(cards)
     print 'sets:'
     ordered_sets(sets)
-
+    '''
     graph = graph_generator(cards)
 
     topology = []
@@ -177,7 +177,7 @@ while sets or deck:
     # searching disjoint sets
     disjointed = topology_sort(graph)
     print 'disjointed sets: %d' % disjointed
-
+    '''
     chosen_set = interaction(cards)
     replacement = take_cards(deck, set_number)
 

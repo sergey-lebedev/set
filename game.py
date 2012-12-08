@@ -5,7 +5,6 @@ import itertools
 import __builtin__
 import pygraphviz as pgv
 from draw import *
-from user_input import *
 from pygame.locals import *
 
 __builtin__.set_number = 3

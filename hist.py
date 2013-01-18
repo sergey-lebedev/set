@@ -2,6 +2,7 @@ import cv
 import cv2
 import time
 import numpy as np
+import pygraphviz
 
 WHITE = (255, 255, 255)
 
@@ -74,10 +75,10 @@ def draw_all_contours(image):
     contours, hierarchy = cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     print hierarchy
     color = (255, 255, 255)
-    for i in range(len(contours)):
+    for i, contour in enumerate(contours):
         cv2.drawContours(copy, contours, i, color)
-        moments = cv2.moments(contours[i])
-        rect = cv2.boundingRect(contours[i])
+        moments = cv2.moments(contour)
+        rect = cv2.boundingRect(contour)
         (a, b, c, d) = rect
         rectangle = ((a, b), (a + c, b + d), WHITE)
         cv2.putText(copy, str(i), ((a + c), (b + d)), 1, 1, WHITE)
@@ -85,8 +86,8 @@ def draw_all_contours(image):
         #print i
         #print cv2.HuMoments(moments)
         #print cv.MinAreaRect2(cv.fromarray(contours[i]))
-    for i in range(len(contours)):
-        print i, cv2.matchShapes(contours[0], contours[i], cv.CV_CONTOURS_MATCH_I3 , 0)
+    for i, contour in enumerate(contours):
+        print i, cv2.matchShapes(contours[0], contour, cv.CV_CONTOURS_MATCH_I3 , 0)
     return copy
 
 def draw_box(image, first, second):

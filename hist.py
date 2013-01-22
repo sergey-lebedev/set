@@ -2,7 +2,7 @@ import cv
 import cv2
 import time
 import numpy as np
-import pygraphviz
+from pygraphviz import *
 
 WHITE = (255, 255, 255)
 
@@ -69,11 +69,40 @@ def canny(image):
     cv2.imshow('canny', result)
     return result
 
+def get_hierarchy_tree(hierarchy):
+    graph = AGraph(directed=True)
+    root = 'root'
+    graph.add_node(root)
+    sequence = hierarchy[0]
+    for i, node in enumerate(sequence):
+        index = str(i)
+        (h_next, h_prev, v_next, v_prev) = node
+        graph.add_node(index)
+        if v_prev == -1:
+            graph.add_edge([root, index])
+        else:
+            graph.add_edge([str(v_prev), index])
+    return graph
+
+def plot_hierarchy_tree(hierarchy):
+    graph = get_hierarchy_tree(hierarchy)
+    filename = 'graph.png'
+    graph.draw(path=filename, format='png', prog='dot')
+    graph_image = cv2.imread(filename)
+    print cv.GetSize(cv.fromarray(graph_image))
+    (width, height) = cv.GetSize(cv.fromarray(graph_image))
+    screen_width = 1280
+    screen_height = 800
+    scale_factor = min(screen_width/float(width), screen_height/float(height))
+    scale_factor = min(1, scale_factor)
+    resized_graph = cv2.resize(graph_image, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LANCZOS4)
+    cv2.imshow('graph', resized_graph)
+
 def draw_all_contours(image):
     copy = image.copy()
     result = adaptive_threshold(copy)
     contours, hierarchy = cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    print hierarchy
+    plot_hierarchy_tree(hierarchy)
     color = (255, 255, 255)
     for i, contour in enumerate(contours):
         cv2.drawContours(copy, contours, i, color)

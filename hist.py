@@ -54,8 +54,9 @@ def plot_hist(image):
 def adaptive_threshold(image):
     result = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     result = cv2.medianBlur(result, 5)
+    #result = cv2.equalizeHist(result)
     cv2.imshow('blured', result)
-    #result = cv2.inpaint(result)
+    #result = cv2.inpaint(result, [], 10, cv2.INPAINT_NS)
     adaptive_method = cv2.ADAPTIVE_THRESH_MEAN_C
     threshold_type = cv2.THRESH_BINARY_INV
     block_size = 7
@@ -89,7 +90,6 @@ def plot_hierarchy_tree(hierarchy):
     filename = 'graph.png'
     graph.draw(path=filename, format='png', prog='dot')
     graph_image = cv2.imread(filename)
-    print cv.GetSize(cv.fromarray(graph_image))
     (width, height) = cv.GetSize(cv.fromarray(graph_image))
     screen_width = 1280
     screen_height = 800
@@ -97,6 +97,21 @@ def plot_hierarchy_tree(hierarchy):
     scale_factor = min(1, scale_factor)
     resized_graph = cv2.resize(graph_image, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LANCZOS4)
     cv2.imshow('graph', resized_graph)
+    root = 'root'
+    queue = [root]
+    nodes_on_level = []
+    while queue:
+        sequence = []
+        for node in queue:
+            sequence.extend(graph.successors(node))
+        nodes_on_level.append(len(sequence))
+        queue = sequence
+    print nodes_on_level
+    difference = []
+    for i in range(len(nodes_on_level) - 2):
+        (left, right) = nodes_on_level[i: i + 2]
+        difference.append(abs(left - right))
+    print difference
 
 def draw_all_contours(image):
     copy = image.copy()
@@ -105,7 +120,8 @@ def draw_all_contours(image):
     plot_hierarchy_tree(hierarchy)
     color = (255, 255, 255)
     for i, contour in enumerate(contours):
-        cv2.drawContours(copy, contours, i, color)
+        cv2.drawContours(copy, contours, i, color, 1)
+        print cv.ContourArea(cv.fromarray(contour))
         moments = cv2.moments(contour)
         rect = cv2.boundingRect(contour)
         (a, b, c, d) = rect

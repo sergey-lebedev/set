@@ -25,10 +25,10 @@ drawings = {
     'light╮_up_and_right': u'\u2514',
     'heavy_horizontal': u'\u2550',
     'heavy_vertical': u'\u2551',
- 	'light_arc_down_and_right': u'\u256d',
- 	'light_arc_down_and_left': u'\u256e',
- 	'light_arc_up_and_left': u'\u256f',
- 	'light_arc_up_and_right': u'\u2570',
+    'light_arc_down_and_right': u'\u256d',
+    'light_arc_down_and_left': u'\u256e',
+    'light_arc_up_and_left': u'\u256f',
+    'light_arc_up_and_right': u'\u2570',
 }
 colors = {
     'red': u'\033[31m',

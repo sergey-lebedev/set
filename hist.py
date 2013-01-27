@@ -8,9 +8,9 @@ WHITE = (255, 255, 255)
 
 images_dir = './samples'
 #filename = 'Webcam-1355581255.png'
-filename = 'Webcam-1355052953.png'
+#filename = 'Webcam-1355052953.png'
 #filename = 'Webcam-1356160723.png'
-#filename = 'Webcam-1355053113.png'
+filename = 'Webcam-1355053113.png'
 #filename = 'Webcam-1356180412.png'
 #filename = 'Webcam-1355052975.png'
 image = cv2.imread('/'.join((images_dir, filename)))
@@ -21,7 +21,7 @@ second_anchor = None
 box_drawing = False
 box = ((-1, -1), (0, 0))
 
-def plot_hist(image):
+def plot_hist(image, mask=None):
     bins = np.arange(256) #.reshape(256,1)
     slices = cv2.split(image)
     colors = zip(('b', 'g', 'r'), slices)
@@ -35,7 +35,7 @@ def plot_hist(image):
     height = 300
     for i, (color, slice) in enumerate(colors):
         cv2.imshow(color, slice)
-        subhist = cv2.calcHist([slice], [0], None, [256], [0, 255])
+        subhist = cv2.calcHist([slice], [0], mask, [256], [0, 255])
         subhists.append(subhist)
         params = (0, height - 1, cv2.NORM_MINMAX)
         cv2.normalize(subhist, subhist, *params)
@@ -97,6 +97,9 @@ def plot_hierarchy_tree(hierarchy):
     scale_factor = min(1, scale_factor)
     resized_graph = cv2.resize(graph_image, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LANCZOS4)
     cv2.imshow('graph', resized_graph)
+    
+def find_figures(hierarchy):
+    graph = get_hierarchy_tree(hierarchy)
     root = 'root'
     queue = [root]
     nodes_on_level = []
@@ -104,20 +107,67 @@ def plot_hierarchy_tree(hierarchy):
         sequence = []
         for node in queue:
             sequence.extend(graph.successors(node))
-        nodes_on_level.append(len(sequence))
+        nodes_on_level.append(sequence)
         queue = sequence
     print nodes_on_level
     difference = []
     for i in range(len(nodes_on_level) - 2):
-        (left, right) = nodes_on_level[i: i + 2]
+        (left, right) = (len(nodes_on_level[i]), len(nodes_on_level[i+1]))
         difference.append(abs(left - right))
-    print difference
+    return graph, nodes_on_level, difference
+
+def plot_intercontour_hist(image, outer_contour_id, contours, graph):
+    outer_contour = contours[outer_contour_id]
+    (x, y, width, height) = cv2.boundingRect(outer_contour)
+    subimage = get_subimage(image, (x, y), (x + width, y + height))
+    monochrome = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
+    mask = cv2.compare(monochrome, monochrome, cv2.CMP_EQ)
+    inverted_mask = mask.copy()
+    inner_contours = [contours[int(contour_id)] for contour_id in graph.successors(outer_contour_id)]
+    for i in range(width):
+        for j in range(height):
+            point = (x + i, y + j)
+            outer_contour_test = cv2.pointPolygonTest(outer_contour, point, 0)
+            inner_contours_test = -1
+            for inner_contour in inner_contours:
+                inner_contour_test = cv2.pointPolygonTest(inner_contour, point, 0)
+                if inner_contour_test > 0: 
+                    inner_contours_test = 1
+                    break
+            if outer_contour_test > 0 and inner_contours_test < 0:
+                inverted_mask[j][i] = 0
+            else:
+                mask[j][i] = 0
+    cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
+    cv2.imshow('subimage', subimage) 
+    plot_hist(subimage, mask)
+
+def plot_figures_hist(contours, hierarchy, image):
+    (graph, nodes_on_level, difference) = find_figures(hierarchy)
+    # two equal peaks
+    position = 2
+    sliced = difference[position:]
+    if not sliced: 
+        return
+    else:
+        min_value = min(sliced)
+        index = sliced.index(min_value)
+        level = position + index + 1
+        # intercontour gap
+        for node in nodes_on_level[level]:
+            figure_inner_contour_id = int(node)
+            figure_outer_contour_id = int(graph.predecessors(node)[0])
+            plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
+        # card background
+        card_inner_contour_id = int(graph.predecessors(figure_outer_contour_id)[0])
+        plot_intercontour_hist(image, card_inner_contour_id, contours, graph)
 
 def draw_all_contours(image):
     copy = image.copy()
     result = adaptive_threshold(copy)
     contours, hierarchy = cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     plot_hierarchy_tree(hierarchy)
+    plot_figures_hist(contours, hierarchy, image)
     color = (255, 255, 255)
     for i, contour in enumerate(contours):
         cv2.drawContours(copy, contours, i, color, 1)

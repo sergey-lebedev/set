@@ -7,12 +7,12 @@ from pygraphviz import *
 WHITE = (255, 255, 255)
 
 images_dir = './samples'
-#filename = 'Webcam-1355581255.png'
-#filename = 'Webcam-1355052953.png'
-#filename = 'Webcam-1356160723.png'
-filename = 'Webcam-1355053113.png'
-#filename = 'Webcam-1356180412.png'
-#filename = 'Webcam-1355052975.png'
+##filename = 'Webcam-1355581255.png'
+filename = 'Webcam-1355052953.png'
+##filename = 'Webcam-1356160723.png'
+#filename = 'Webcam-1355053113.png'
+##filename = 'Webcam-1356180412.png'
+##filename = 'Webcam-1355052975.png'
 image = cv2.imread('/'.join((images_dir, filename)))
 cv2.moveWindow('experiment', 100, 100)
 
@@ -85,8 +85,7 @@ def get_hierarchy_tree(hierarchy):
             graph.add_edge([str(v_prev), index])
     return graph
 
-def plot_hierarchy_tree(hierarchy):
-    graph = get_hierarchy_tree(hierarchy)
+def plot_hierarchy_tree(graph):
     filename = 'graph.png'
     graph.draw(path=filename, format='png', prog='dot')
     graph_image = cv2.imread(filename)
@@ -98,6 +97,61 @@ def plot_hierarchy_tree(hierarchy):
     resized_graph = cv2.resize(graph_image, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LANCZOS4)
     cv2.imshow('graph', resized_graph)
     
+def find_cards(hierarchy):
+    (graph, nodes_on_level, difference) = find_figures(hierarchy)
+    # two equal peaks
+    level = two_equal_peaks_finder(difference)
+    steps = 2
+    sequence = []
+    if level: sequence = nodes_on_level[level]
+    while steps != 0 and sequence:
+        steps -= 1
+        parents = []
+        for node in sequence:
+            parent = graph.predecessors(node)[0]
+            if parent not in parents:
+                parents.append(parent)
+        #print parents
+        sequence = parents
+    print '%d card(s) detected'%len(sequence)
+    return graph, sequence
+
+def feature_detector(hierarchy):
+    (graph, cards) = find_cards(hierarchy)
+    recognized_cards = []
+    for card in cards:
+        recognized_card = {}
+        number = number_feature_detector(graph, card)
+        recognized_card['number'] = number
+        recognized_cards.append(recognized_card)
+    print recognized_cards   
+
+def number_feature_detector(graph, card):
+    steps = 2
+    #print card
+    sequence = [card]
+    while steps != 0 and sequence:
+        steps -= 1
+        childrens = []
+        for node in sequence:
+            #print node
+            child = graph.successors(node)
+            if child not in childrens:
+                childrens.extend(child)
+        sequence = childrens
+        #print childrens
+    print '%d figure(s) on card'%len(sequence)
+    return len(sequence)
+    
+def symbol_feature_detector():
+    pass
+
+def color_feature_detector():
+    pass
+
+def shading_feature_detector():
+    pass
+
 def find_figures(hierarchy):
     graph = get_hierarchy_tree(hierarchy)
     root = 'root'
@@ -109,7 +163,7 @@ def find_figures(hierarchy):
             sequence.extend(graph.successors(node))
         nodes_on_level.append(sequence)
         queue = sequence
-    print nodes_on_level
+    #print nodes_on_level
     difference = []
     for i in range(len(nodes_on_level) - 2):
         (left, right) = (len(nodes_on_level[i]), len(nodes_on_level[i+1]))
@@ -142,36 +196,39 @@ def plot_intercontour_hist(image, outer_contour_id, contours, graph):
     cv2.imshow('subimage', subimage) 
     plot_hist(subimage, mask)
 
-def plot_figures_hist(contours, hierarchy, image):
-    (graph, nodes_on_level, difference) = find_figures(hierarchy)
+def two_equal_peaks_finder(difference):
     # two equal peaks
+    level = None
     position = 2
     sliced = difference[position:]
-    if not sliced: 
-        return
-    else:
+    if sliced:
         min_value = min(sliced)
         index = sliced.index(min_value)
         level = position + index + 1
+    return level 
+
+def plot_figures_hist(contours, hierarchy, image):
+    (graph, nodes_on_level, difference) = find_figures(hierarchy)
+    # two equal peaks
+    level = two_equal_peaks_finder(difference)
+    if level:
         # intercontour gap
-        for node in nodes_on_level[level]:
-            figure_inner_contour_id = int(node)
-            figure_outer_contour_id = int(graph.predecessors(node)[0])
-            plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
+        figure_outer_contour_id = intercontour_gap_processing(image, contours, graph, nodes_on_level, level)
         # card background
-        card_inner_contour_id = int(graph.predecessors(figure_outer_contour_id)[0])
-        plot_intercontour_hist(image, card_inner_contour_id, contours, graph)
+        #card_processing(image, figure_outer_contour_id, contours, graph)
 
 def draw_all_contours(image):
     copy = image.copy()
     result = adaptive_threshold(copy)
     contours, hierarchy = cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    plot_hierarchy_tree(hierarchy)
-    plot_figures_hist(contours, hierarchy, image)
+    graph = get_hierarchy_tree(hierarchy)
+    plot_hierarchy_tree(graph)
+    #plot_figures_hist(contours, hierarchy, image)
+    feature_detector(hierarchy)
     color = (255, 255, 255)
     for i, contour in enumerate(contours):
         cv2.drawContours(copy, contours, i, color, 1)
-        print cv.ContourArea(cv.fromarray(contour))
+        #print cv.ContourArea(cv.fromarray(contour))
         moments = cv2.moments(contour)
         rect = cv2.boundingRect(contour)
         (a, b, c, d) = rect
@@ -181,12 +238,31 @@ def draw_all_contours(image):
         #print i
         #print cv2.HuMoments(moments)
         #print cv.MinAreaRect2(cv.fromarray(contours[i]))
-    for i, contour in enumerate(contours):
-        print i, cv2.matchShapes(contours[0], contour, cv.CV_CONTOURS_MATCH_I3 , 0)
+    #for i, contour in enumerate(contours):
+    #    print i, cv2.matchShapes(contours[0], contour, cv.CV_CONTOURS_MATCH_I3 , 0)
     return copy
 
 def draw_box(image, first, second):
     cv2.rectangle(image, first, second, (0, 255, 0))
+
+def intercontour_gap_processing(image, contours, graph, nodes_on_level, level):
+    # intercontour gap
+    for node in nodes_on_level[level]:
+        figure_inner_contour_id = int(node)
+        figure_outer_contour_id = int(graph.predecessors(node)[0])
+        plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
+    return figure_outer_contour_id
+
+def card_processing(image, figure_outer_contour_id, contours, graph):
+    # card background
+    card_inner_contour_id = int(graph.predecessors(figure_outer_contour_id)[0])
+    plot_intercontour_hist(image, card_inner_contour_id, contours, graph)
+
+def cards_recognition():
+    return recognized_cards
+
+def interior_processing():
+    pass
 
 def get_subimage(image, first_anchor, second_anchor):
     (fax, fay) = first_anchor

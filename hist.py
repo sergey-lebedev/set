@@ -5,6 +5,8 @@ import numpy as np
 from pygraphviz import *
 
 WHITE = (255, 255, 255)
+screen_width = 1280
+screen_height = 700
 
 images_dir = './samples'
 ##filename = 'Webcam-1355581255.png'
@@ -90,8 +92,6 @@ def plot_hierarchy_tree(graph):
     graph.draw(path=filename, format='png', prog='dot')
     graph_image = cv2.imread(filename)
     (width, height) = cv.GetSize(cv.fromarray(graph_image))
-    screen_width = 1280
-    screen_height = 800
     scale_factor = min(screen_width/float(width), screen_height/float(height))
     scale_factor = min(1, scale_factor)
     resized_graph = cv2.resize(graph_image, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LANCZOS4)
@@ -116,12 +116,45 @@ def find_cards(hierarchy):
     print '%d card(s) detected'%len(sequence)
     return graph, sequence
 
-def feature_detector(hierarchy):
+def plot_heatmap(similarity_matrix, n):
+    pixels = max(1, min(screen_width / n, screen_height / n))
+    side = n * pixels
+    heatmap = cv.CreateImage((side, side), cv.IPL_DEPTH_8U, 1)
+    for i in range(n):
+        for j in range(n):
+            (a, b) = (i * pixels, j * pixels)
+            (c, d) = (a + pixels, b + pixels)
+            intensity = int(similarity_matrix[(i, j)] * 255)
+            rectangle = (((a, b), (c, b), (c, d), (a, d)), intensity)
+            cv.FillConvexPoly(heatmap, *rectangle)
+    cv.ShowImage('heatmap', heatmap)
+
+def figure_classifyer(hierarchy, contours):
     (graph, cards) = find_cards(hierarchy)
+    figure_contours = []
+    # collecting figures
+    for card in cards:
+        (sequence, number) = number_feature_detector(graph, card)
+        for node in sequence:
+            figure_outer_contour_id = int(graph.predecessors(node)[0])
+            figure_contours.append(figure_outer_contour_id)
+    n = len(figure_contours)
+    # adjacency matrix
+    similarity_matrix = {}
+    for i, ci in enumerate(figure_contours):
+        for j, cj in enumerate(figure_contours):
+            metric = cv2.matchShapes(contours[ci], contours[cj], cv.CV_CONTOURS_MATCH_I3, 0)
+            similarity_matrix[(i, j)] = metric
+    #print similarity_matrix
+    plot_heatmap(similarity_matrix, n)
+
+def feature_detector(hierarchy, contours):
+    (graph, cards) = find_cards(hierarchy)
+    figure_classifyer(hierarchy, contours)
     recognized_cards = []
     for card in cards:
         recognized_card = {}
-        number = number_feature_detector(graph, card)
+        (sequence, number) = number_feature_detector(graph, card)
         recognized_card['number'] = number
         recognized_cards.append(recognized_card)
     print recognized_cards   
@@ -141,7 +174,7 @@ def number_feature_detector(graph, card):
         sequence = childrens
         #print childrens
     print '%d figure(s) on card'%len(sequence)
-    return len(sequence)
+    return sequence, len(sequence)
     
 def symbol_feature_detector():
     pass
@@ -224,7 +257,7 @@ def draw_all_contours(image):
     graph = get_hierarchy_tree(hierarchy)
     plot_hierarchy_tree(graph)
     #plot_figures_hist(contours, hierarchy, image)
-    feature_detector(hierarchy)
+    feature_detector(hierarchy, contours)
     color = (255, 255, 255)
     for i, contour in enumerate(contours):
         cv2.drawContours(copy, contours, i, color, 1)
@@ -238,8 +271,6 @@ def draw_all_contours(image):
         #print i
         #print cv2.HuMoments(moments)
         #print cv.MinAreaRect2(cv.fromarray(contours[i]))
-    #for i, contour in enumerate(contours):
-    #    print i, cv2.matchShapes(contours[0], contour, cv.CV_CONTOURS_MATCH_I3 , 0)
     return copy
 
 def draw_box(image, first, second):

@@ -124,12 +124,12 @@ def plot_heatmap(similarity_matrix, n):
         for j in range(n):
             (a, b) = (i * pixels, j * pixels)
             (c, d) = (a + pixels, b + pixels)
-            intensity = int(similarity_matrix[(i, j)] * 255)
+            intensity = int((1 - similarity_matrix[(i, j)]) * 255)
             rectangle = (((a, b), (c, b), (c, d), (a, d)), intensity)
             cv.FillConvexPoly(heatmap, *rectangle)
     cv.ShowImage('heatmap', heatmap)
 
-def figure_classifyer(hierarchy, contours):
+def figure_classifier(hierarchy, contours):
     (graph, cards) = find_cards(hierarchy)
     figure_contours = []
     # collecting figures
@@ -141,23 +141,43 @@ def figure_classifyer(hierarchy, contours):
     n = len(figure_contours)
     # adjacency matrix
     similarity_matrix = {}
+    metric_type = cv.CV_CONTOURS_MATCH_I2
     for i, ci in enumerate(figure_contours):
-        for j, cj in enumerate(figure_contours):
-            metric = cv2.matchShapes(contours[ci], contours[cj], cv.CV_CONTOURS_MATCH_I3, 0)
+        for j, cj in enumerate(figure_contours[:i + 1]):
+            metric_ij = cv2.matchShapes(contours[ci], contours[cj], metric_type, 0)
+            metric_ji = cv2.matchShapes(contours[ci], contours[cj], metric_type, 0)
+            metric = 1 - (metric_ij + metric_ji) / 2
             similarity_matrix[(i, j)] = metric
+            similarity_matrix[(j, i)] = metric
     #print similarity_matrix
     plot_heatmap(similarity_matrix, n)
 
-def feature_detector(hierarchy, contours):
+def color_classifier(image, hierarchy, contours):
     (graph, cards) = find_cards(hierarchy)
-    figure_classifyer(hierarchy, contours)
+    figure_contours = []
+    # collecting figures
+    for card in cards:
+        #print 'card: ', card
+        (sequence, number) = number_feature_detector(graph, card)
+        for node in sequence:
+            #print 'node: ', node
+            figure_outer_contour_id = int(graph.predecessors(node)[0])
+            figure_contours.append(figure_outer_contour_id)
+            (subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
+            cv2.imshow('%d-%d: '%(int(card), int(node)), subimage) 
+    n = len(figure_contours)
+
+def feature_detector(image, hierarchy, contours):
+    (graph, cards) = find_cards(hierarchy)
+    figure_classifier(hierarchy, contours)
+    color_classifier(image, hierarchy, contours)
     recognized_cards = []
     for card in cards:
         recognized_card = {}
         (sequence, number) = number_feature_detector(graph, card)
         recognized_card['number'] = number
         recognized_cards.append(recognized_card)
-    print recognized_cards   
+    print recognized_cards
 
 def number_feature_detector(graph, card):
     steps = 2
@@ -226,8 +246,9 @@ def plot_intercontour_hist(image, outer_contour_id, contours, graph):
             else:
                 mask[j][i] = 0
     cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
-    cv2.imshow('subimage', subimage) 
-    plot_hist(subimage, mask)
+    #cv2.imshow('subimage', subimage) 
+    #plot_hist(subimage, mask)
+    return subimage, mask
 
 def two_equal_peaks_finder(difference):
     # two equal peaks
@@ -246,9 +267,8 @@ def plot_figures_hist(contours, hierarchy, image):
     level = two_equal_peaks_finder(difference)
     if level:
         # intercontour gap
-        figure_outer_contour_id = intercontour_gap_processing(image, contours, graph, nodes_on_level, level)
-        # card background
-        #card_processing(image, figure_outer_contour_id, contours, graph)
+        subimage, mask = intercontour_gap_processing(image, contours, graph, nodes_on_level, level)
+    return subimage, mask
 
 def draw_all_contours(image):
     copy = image.copy()
@@ -257,7 +277,7 @@ def draw_all_contours(image):
     graph = get_hierarchy_tree(hierarchy)
     plot_hierarchy_tree(graph)
     #plot_figures_hist(contours, hierarchy, image)
-    feature_detector(hierarchy, contours)
+    feature_detector(image, hierarchy, contours)
     color = (255, 255, 255)
     for i, contour in enumerate(contours):
         cv2.drawContours(copy, contours, i, color, 1)
@@ -281,8 +301,8 @@ def intercontour_gap_processing(image, contours, graph, nodes_on_level, level):
     for node in nodes_on_level[level]:
         figure_inner_contour_id = int(node)
         figure_outer_contour_id = int(graph.predecessors(node)[0])
-        plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
-    return figure_outer_contour_id
+        (subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
+    return subimage, mask
 
 def card_processing(image, figure_outer_contour_id, contours, graph):
     # card background

@@ -23,7 +23,7 @@ second_anchor = None
 box_drawing = False
 box = ((-1, -1), (0, 0))
 
-def plot_hist(image, mask=None):
+def plot_hist(image, mask=None, image_name=''):
     bins = np.arange(256) #.reshape(256,1)
     slices = cv2.split(image)
     colors = zip(('b', 'g', 'r'), slices)
@@ -51,7 +51,7 @@ def plot_hist(image, mask=None):
         subhist = np.int32(np.around(subhist))
         pts = np.column_stack((bins, height - subhist))
         cv2.polylines(hist_image, [pts], False, color_dict[color])
-    cv2.imshow('hist: ', hist_image)
+    cv2.imshow('%s hist: '%image_name, hist_image)
 
 def adaptive_threshold(image):
     result = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -170,12 +170,14 @@ def color_classifier(image, hierarchy, contours):
 def feature_detector(image, hierarchy, contours):
     (graph, cards) = find_cards(hierarchy)
     figure_classifier(hierarchy, contours)
-    color_classifier(image, hierarchy, contours)
+    #color_classifier(image, hierarchy, contours)
     recognized_cards = []
     for card in cards:
         recognized_card = {}
         (sequence, number) = number_feature_detector(graph, card)
+        shading = shading_feature_detector(graph, card, image, contours)
         recognized_card['number'] = number
+        recognized_card['shading'] = shading
         recognized_cards.append(recognized_card)
     print recognized_cards
 
@@ -202,8 +204,31 @@ def symbol_feature_detector():
 def color_feature_detector():
     pass
 
-def shading_feature_detector():
-    pass
+def shading_feature_detector(graph, card, image, contours):
+    card_id = int(card)
+    (subimage, mask) = plot_intercontour_hist(image, card_id, contours, graph)
+    cv2.imshow('%d-%d: '%(int(card), int(card)), subimage)
+    steps = 2
+    #print card
+    sequence = [card]
+    while steps != 0 and sequence:
+        steps -= 1
+        childrens = []
+        for node in sequence:
+            #print node
+            child = graph.successors(node)
+            if child not in childrens:
+                childrens.extend(child)
+        sequence = childrens
+        #print childrens
+    for node in sequence:
+        #print 'node: ', node
+        figure_outer_contour_id = int(graph.predecessors(node)[0])
+        figure_inner_contour_id = int(node)
+        (subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
+        cv2.imshow('%d-%d: '%(int(card), figure_outer_contour_id), subimage)
+        (subimage, mask) = plot_intercontour_hist(image, figure_inner_contour_id, contours, graph)
+        cv2.imshow('%d-%d: '%(int(card), figure_inner_contour_id), subimage) 
 
 def find_figures(hierarchy):
     graph = get_hierarchy_tree(hierarchy)
@@ -246,8 +271,10 @@ def plot_intercontour_hist(image, outer_contour_id, contours, graph):
             else:
                 mask[j][i] = 0
     cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
-    #cv2.imshow('subimage', subimage) 
-    #plot_hist(subimage, mask)
+    inner_contour_id = str(inner_contours)
+    image_name = '%d-%s'%(outer_contour_id, inner_contours)
+    #cv2.imshow(image_name, subimage) 
+    plot_hist(subimage, mask, image_name)
     return subimage, mask
 
 def two_equal_peaks_finder(difference):
@@ -281,16 +308,12 @@ def draw_all_contours(image):
     color = (255, 255, 255)
     for i, contour in enumerate(contours):
         cv2.drawContours(copy, contours, i, color, 1)
-        #print cv.ContourArea(cv.fromarray(contour))
-        moments = cv2.moments(contour)
+        #moments = cv2.moments(contour)
         rect = cv2.boundingRect(contour)
         (a, b, c, d) = rect
         rectangle = ((a, b), (a + c, b + d), WHITE)
         cv2.putText(copy, str(i), ((a + c), (b + d)), 1, 1, WHITE)
         cv2.rectangle(copy, *rectangle)
-        #print i
-        #print cv2.HuMoments(moments)
-        #print cv.MinAreaRect2(cv.fromarray(contours[i]))
     return copy
 
 def draw_box(image, first, second):

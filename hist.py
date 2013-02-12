@@ -301,53 +301,14 @@ def shading_feature_detector(graph, card, image, contours):
         cv2.imshow('%d-%d: '%(int(card), figure_outer_contour_id), subimage)
         (subhists, subimage, mask) = plot_intercontour_hist(image, figure_inner_contour_id, contours, graph)
         cv2.imshow('%d-%d: '%(int(card), figure_inner_contour_id), subimage)
-        (width, height) = cv.GetSize(cv.fromarray(mask))
-        # conversion to HSV
-        subimage_hsv = cv2.cvtColor(subimage, cv2.COLOR_BGR2HLS)
-        for i in range(height):
-            for j in range(width):
-                if mask == None or mask[i][j]:
-                    (hue, lightness, saturation) = subimage_hsv[i][j]
-                    #print 'lightness: ', lightness
-                    #print 'contour_subhists[lightness]: ', contour_subhists[lightness]
-                    #print 'background_subhists[lightness]: ', background_subhists[lightness]
-                    '''
-                    point_vector = subimage[i][j]
-                    p = range(len(point_vector))
-                    for k, component in enumerate(point_vector):
-                        h1 = contour_subhists[k][component]
-                        h2 = background_subhists[k][component]
-                        if h1 == h2:
-                            p[k] = 0.5
-                        else:
-                            p[k] = h1 / (h1 + h2)
-                    #p = sum(p)/len(p)
-                    prod = 1
-                    for elem in p:
-                        prod *= elem
-                    p = prod
-                    #p = pow(p, 1/3.0)
-                    '''
-                    h1 = contour_subhists[lightness]
-                    h2 = background_subhists[lightness]
-                    if h1 == h2:
-                        p = 0.5
-                    else:
-                        p = h1 / (h1 + h2)
-                    #print p
-                    #result.extend(p)
-                    result.append(p)
-    #result.sort()
-    #print result
-    #print len(result)
-    #print len(result)/2
-    #result = result[len(result)/2]
+        h1 = cv2.compareHist(subhists, contour_subhists, 2)
+        h2 = cv2.compareHist(subhists, background_subhists, 2)
+        p = h1 / (h1 + h2)
+        result.append(p)
     result = sum(result)/len(result)
-    print cv2.compareHist(subhists, contour_subhists, 2)
-    print cv2.compareHist(subhists, background_subhists, 2)
     print result
-    lb = 0.08
-    ub = 0.45
+    lb = 0.30
+    ub = 0.77
     if result <= lb:
         shading = 'open'
     elif lb < result <= ub:

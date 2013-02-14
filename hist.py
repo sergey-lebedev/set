@@ -12,12 +12,13 @@ screen_height = 700
 
 images_dir = './samples'
 ##filename = 'Webcam-1355581255.png'
-filename = 'Webcam-1355052953.png'
-##filename = 'Webcam-1356160723.png'
+#filename = 'Webcam-1355052953.png'
+#filename = 'Webcam-1356160723.png'
 #filename = 'Webcam-1355053113.png'
 ##filename = 'Webcam-1356180412.png'
 ##filename = 'Webcam-1355052975.png'
 ##filename = 'Webcam-1356180892.png'
+filename = 'Webcam-1356203219.png'
 image = cv2.imread('/'.join((images_dir, filename)))
 cv2.moveWindow('experiment', 100, 100)
 
@@ -26,24 +27,17 @@ second_anchor = None
 box_drawing = False
 box = ((-1, -1), (0, 0))
 
-def plot_lightness_hist(image, mask=None, image_name=''):
-    bins = np.arange(256)
-    height = 300
-    hist_image = np.zeros((height, 256, 1))
+def plot_hist_hls(image, mask=None, image_name=''):
     converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
     (hue, lightness, saturation) = cv2.split(converted_image)
     cv2.imshow(image_name, lightness)
-    subhist = cv2.calcHist([lightness], [0], mask, [256], [0, 255])
-    #print subhist
-    params = (1, 0, cv2.NORM_L1)
-    cv2.normalize(subhist, subhist, *params)
-    #subhist = np.int32(np.around(subhist))
-    # density of probability calculation
-    #pts = np.column_stack((bins, height - subhist))
-    #cv2.polylines(hist_image, [pts], False, 255)
-    #cv2.imshow('%s hist: '%image_name, hist_image)
-    #print subhist
-    return subhist
+    subhists = []
+    for i, slice in enumerate((hue, lightness, saturation)):
+        subhist = cv2.calcHist([slice], [0], mask, [256], [0, 255])
+        params = (1, 0, cv2.NORM_L1)
+        cv2.normalize(subhist, subhist, *params)
+        subhists.append(subhist)
+    return subhists
 
 def plot_hist(image, mask=None, image_name=''):
     bins = np.arange(256) #.reshape(256,1)
@@ -78,6 +72,8 @@ def plot_hist(image, mask=None, image_name=''):
     #cv2.imshow('%s hist: '%image_name, hist_image)
     #color_triangle = plot_color_triangle(image, mask)
     #cv.ShowImage('%s color triangle: '%image_name, color_triangle)
+    color_rectangle = plot_color_rectangle(image, mask)
+    cv.ShowImage('%s color triangle: '%image_name, color_rectangle)
     return subhists
 
 def adaptive_threshold(image):
@@ -197,7 +193,39 @@ def plot_color_triangle(image, mask):
     white_dot = (x, y) 
     rectangle = ((white_dot, white_dot, white_dot, white_dot), WHITE)
     cv.FillConvexPoly(color_triangle, *rectangle)
-    return color_triangle 
+    return color_triangle
+
+def plot_color_rectangle(image, mask):
+    a = screen_height
+    width = 180
+    height = 256
+    #print (width, height)
+    color_rectangle = cv.CreateImage((width, height), cv.IPL_DEPTH_8U, 3)    
+    (image_width, image_height) = cv.GetSize(cv.fromarray(image))
+    #print (image_width, image_height)
+    rectangle = (((0, 0), (width, 0), (width, height), (0, height)), BLACK)
+    cv.FillConvexPoly(color_rectangle, *rectangle)
+    converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
+    for i in range(image_height):
+        for j in range(image_width):
+            if mask == None or mask[i][j]:
+                color = image[i][j]
+                hls = converted_image[i][j]
+                #print color
+                (h, l, s) = hls
+                hls = (h, l, s)
+                print hls
+                x = int(h)
+                y = int(l)
+                color = cv.Scalar(*color)
+                rectangle = (((x, y), (x, y), (x, y), (x, y)), color)
+                cv.FillConvexPoly(color_rectangle, *rectangle)
+    #x = (a - 1) / 2
+    #y = (a - 1) / 2
+    #white_dot = (x, y) 
+    #rectangle = ((white_dot, white_dot, white_dot, white_dot), WHITE)
+    cv.FillConvexPoly(color_rectangle, *rectangle)
+    return color_rectangle
 
 def figure_classifier(hierarchy, contours):
     (graph, cards) = find_cards(hierarchy)
@@ -213,9 +241,12 @@ def figure_classifier(hierarchy, contours):
     similarity_matrix = {}
     metric_type = cv.CV_CONTOURS_MATCH_I2
     for i, ci in enumerate(figure_contours):
+        moments = cv2.moments(contours[ci])
+        print moments
+        print cv2.HuMoments(moments)
         for j, cj in enumerate(figure_contours[:i + 1]):
             metric_ij = cv2.matchShapes(contours[ci], contours[cj], metric_type, 0)
-            metric_ji = cv2.matchShapes(contours[ci], contours[cj], metric_type, 0)
+            metric_ji = cv2.matchShapes(contours[cj], contours[ci], metric_type, 0)
             metric = 1 - (metric_ij + metric_ji) / 2
             similarity_matrix[(i, j)] = metric
             similarity_matrix[(j, i)] = metric
@@ -224,7 +255,7 @@ def figure_classifier(hierarchy, contours):
 
 def color_classifier(image, hierarchy, contours):
     (graph, cards) = find_cards(hierarchy)
-    figure_contours = []
+    figure_hues = []
     # collecting figures
     for card in cards:
         #print 'card: ', card
@@ -232,15 +263,23 @@ def color_classifier(image, hierarchy, contours):
         for node in sequence:
             #print 'node: ', node
             figure_outer_contour_id = int(graph.predecessors(node)[0])
-            figure_contours.append(figure_outer_contour_id)
-            (subhists, subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
-            #cv2.imshow('%d-%d: '%(int(card), int(node)), subimage) 
-    n = len(figure_contours)
+            ((hue, l, s), subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
+            figure_hues.append(hue)
+    n = len(figure_hues)
+    similarity_matrix = {}
+    for i in range(len(figure_hues)):
+        for j in range(len(figure_hues[:i + 1])):
+            metric = 1 - cv2.compareHist(figure_hues[i], figure_hues[j], 3)
+            print metric
+            similarity_matrix[(i, j)] = metric
+            similarity_matrix[(j, i)] = metric
+    #print similarity_matrix
+    plot_heatmap(similarity_matrix, n)
 
 def feature_detector(image, hierarchy, contours):
     (graph, cards) = find_cards(hierarchy)
-    figure_classifier(hierarchy, contours)
-    #color_classifier(image, hierarchy, contours)
+    #figure_classifier(hierarchy, contours)
+    color_classifier(image, hierarchy, contours)
     recognized_cards = []
     for card in cards:
         recognized_card = {}
@@ -276,7 +315,7 @@ def color_feature_detector():
 
 def shading_feature_detector(graph, card, image, contours):
     card_id = int(card)
-    (background_subhists, subimage, mask) = plot_intercontour_hist(image, card_id, contours, graph)
+    ((h, background_lightness, s), subimage, mask) = plot_intercontour_hist(image, card_id, contours, graph)
     cv2.imshow('%d-%d: '%(int(card), int(card)), subimage)
     #print subimage_hsv
     steps = 2
@@ -297,12 +336,12 @@ def shading_feature_detector(graph, card, image, contours):
         #print 'node: ', node
         figure_outer_contour_id = int(graph.predecessors(node)[0])
         figure_inner_contour_id = int(node)
-        (contour_subhists, subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
+        ((h, contour_lightness, s), subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
         cv2.imshow('%d-%d: '%(int(card), figure_outer_contour_id), subimage)
-        (subhists, subimage, mask) = plot_intercontour_hist(image, figure_inner_contour_id, contours, graph)
+        ((h, lightness, s), subimage, mask) = plot_intercontour_hist(image, figure_inner_contour_id, contours, graph)
         cv2.imshow('%d-%d: '%(int(card), figure_inner_contour_id), subimage)
-        h1 = cv2.compareHist(subhists, contour_subhists, 2)
-        h2 = cv2.compareHist(subhists, background_subhists, 2)
+        h1 = cv2.compareHist(lightness, contour_lightness, 2)
+        h2 = cv2.compareHist(lightness, background_lightness, 2)
         p = h1 / (h1 + h2)
         result.append(p)
     result = sum(result)/len(result)
@@ -362,7 +401,7 @@ def plot_intercontour_hist(image, outer_contour_id, contours, graph):
     image_name = '%d-%s'%(outer_contour_id, inner_contours)
     #cv2.imshow(image_name, subimage) 
     #subhists = plot_hist(subimage, mask, image_name)
-    subhists = plot_lightness_hist(subimage, mask, image_name)
+    subhists = plot_hist_hls(subimage, mask, image_name)
     return subhists, subimage, mask
 
 def two_equal_peaks_finder(difference):

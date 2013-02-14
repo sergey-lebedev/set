@@ -61,8 +61,7 @@ def find_cards(graph):
     print '%d card(s) detected'%len(sequence)
     return sequence
 
-def figure_classifier(graph, contours):
-    cards = find_cards(graph)
+def figure_classifier(cards, graph, contours):
     figure_contours = []
     # collecting figures
     for card in cards:
@@ -87,8 +86,7 @@ def figure_classifier(graph, contours):
     #print similarity_matrix
     plot_heatmap(similarity_matrix, n)
 
-def color_classifier(image, graph, contours):
-    cards = find_cards(graph)
+def color_classifier(image, cards, graph, contours):
     figure_hues = []
     # collecting figures
     for card in cards:
@@ -112,8 +110,8 @@ def color_classifier(image, graph, contours):
 
 def feature_detector(image, graph, contours):
     cards = find_cards(graph)
-    #figure_classifier(graph, contours)
-    color_classifier(image, graph, contours)
+    #figure_classifier(cards, graph, contours)
+    color_classifier(image, cards, graph, contours)
     recognized_cards = []
     for card in cards:
         recognized_card = {}

@@ -3,12 +3,8 @@ import cv2
 import time
 import math
 import numpy as np
+from plot import *
 from pygraphviz import *
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-screen_width = 1280
-screen_height = 700
 
 images_dir = './samples'
 ##filename = 'Webcam-1355581255.png'
@@ -26,55 +22,6 @@ first_anchor = None
 second_anchor = None
 box_drawing = False
 box = ((-1, -1), (0, 0))
-
-def plot_hist_hls(image, mask=None, image_name=''):
-    converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
-    (hue, lightness, saturation) = cv2.split(converted_image)
-    cv2.imshow(image_name, lightness)
-    subhists = []
-    for i, slice in enumerate((hue, lightness, saturation)):
-        subhist = cv2.calcHist([slice], [0], mask, [256], [0, 255])
-        params = (1, 0, cv2.NORM_L1)
-        cv2.normalize(subhist, subhist, *params)
-        subhists.append(subhist)
-    return subhists
-
-def plot_hist(image, mask=None, image_name=''):
-    bins = np.arange(256) #.reshape(256,1)
-    slices = cv2.split(image)
-    colors = zip(('b', 'g', 'r'), slices)
-    color_dict = {
-        'b': (255, 0, 0),
-        'g': (0, 255, 0),
-        'r': (0, 0, 255)
-    }
-    l1_norm = []
-    subhists = []
-    height = 300
-    for i, (color, slice) in enumerate(colors):
-        cv2.imshow(color, slice)
-        subhist = cv2.calcHist([slice], [0], mask, [256], [0, 255])
-        subhists.append(subhist)
-        params = (0, height - 1, cv2.NORM_MINMAX)
-        cv2.normalize(subhist, subhist, *params)
-        l1_norm.append(cv.Norm(cv.fromarray(subhist), None, cv2.NORM_L1))
-    l1_norm_min = min(l1_norm)
-    hist_image = np.zeros((height, 256, 3))
-    for i, (color, slice) in enumerate(colors):
-        subhist = subhists[i]
-        params = (l1_norm_min, 0, cv2.NORM_L1)
-        cv2.normalize(subhist, subhist, *params)
-        subhist = np.int32(np.around(subhist))
-        # density of probability calculation
-        subhists[i] = map(lambda x: float(x)/l1_norm_min, subhist)
-        pts = np.column_stack((bins, height - subhist))
-        cv2.polylines(hist_image, [pts], False, color_dict[color])
-    #cv2.imshow('%s hist: '%image_name, hist_image)
-    #color_triangle = plot_color_triangle(image, mask)
-    #cv.ShowImage('%s color triangle: '%image_name, color_triangle)
-    color_rectangle = plot_color_rectangle(image, mask)
-    cv.ShowImage('%s color triangle: '%image_name, color_rectangle)
-    return subhists
 
 def adaptive_threshold(image):
     result = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -109,16 +56,6 @@ def get_hierarchy_tree(hierarchy):
         else:
             graph.add_edge([str(v_prev), index])
     return graph
-
-def plot_hierarchy_tree(graph):
-    filename = 'graph.png'
-    graph.draw(path=filename, format='png', prog='dot')
-    graph_image = cv2.imread(filename)
-    (width, height) = cv.GetSize(cv.fromarray(graph_image))
-    scale_factor = min(screen_width/float(width), screen_height/float(height))
-    scale_factor = min(1, scale_factor)
-    resized_graph = cv2.resize(graph_image, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LANCZOS4)
-    cv2.imshow('graph', resized_graph)
     
 def find_cards(hierarchy):
     (graph, nodes_on_level, difference) = find_figures(hierarchy)
@@ -138,94 +75,6 @@ def find_cards(hierarchy):
         sequence = parents
     print '%d card(s) detected'%len(sequence)
     return graph, sequence
-
-def plot_heatmap(similarity_matrix, n):
-    pixels = max(1, min(screen_width / n, screen_height / n))
-    side = n * pixels
-    heatmap = cv.CreateImage((side, side), cv.IPL_DEPTH_8U, 1)
-    for i in range(n):
-        for j in range(n):
-            (a, b) = (i * pixels, j * pixels)
-            (c, d) = (a + pixels, b + pixels)
-            intensity = int((1 - similarity_matrix[(i, j)]) * 255)
-            rectangle = (((a, b), (c, b), (c, d), (a, d)), intensity)
-            cv.FillConvexPoly(heatmap, *rectangle)
-    cv.ShowImage('heatmap', heatmap)
-
-def plot_color_triangle(image, mask):
-    a = screen_height
-    height = a
-    width = int(math.ceil(2 * a / math.sqrt(3)))
-    #print (width, height)
-    color_triangle = cv.CreateImage((width, height), cv.IPL_DEPTH_8U, 3)    
-    (image_width, image_height) = cv.GetSize(cv.fromarray(image))
-    #print (image_width, image_height)
-    rectangle = (((0, 0), (width, 0), (width, height), (0, height)), BLACK)
-    cv.FillConvexPoly(color_triangle, *rectangle)
-    for i in range(image_height):
-        for j in range(image_width):
-            if mask == None or mask[i][j]:
-                color = image[i][j]
-                #print color
-                (B, G, R) = color
-                color = (B, G, R)
-                #print color
-                intensity = float(sum(color))
-                if intensity == 0:
-                    b = 1.0 / 3.0
-                    g = 1.0 / 3.0
-                else:
-                    b = (B / intensity)
-                    g = (G / intensity)
-                #print b, g
-                x = math.sqrt(3) * (a - 1) * (1 - b) / 2 
-                y = (a - 1) * (1 - g)
-                x = int(x)
-                y = int(y)
-                #print x, y
-                #print color_triangle[0][0]
-                #color_triangle[x][y] = 255
-                color = cv.Scalar(*color)
-                rectangle = (((x, y), (x, y), (x, y), (x, y)), color)
-                cv.FillConvexPoly(color_triangle, *rectangle)
-    x = (a - 1) / math.sqrt(3)
-    y = 2 * (a - 1) / 3.0
-    white_dot = (x, y) 
-    rectangle = ((white_dot, white_dot, white_dot, white_dot), WHITE)
-    cv.FillConvexPoly(color_triangle, *rectangle)
-    return color_triangle
-
-def plot_color_rectangle(image, mask):
-    a = screen_height
-    width = 180
-    height = 256
-    #print (width, height)
-    color_rectangle = cv.CreateImage((width, height), cv.IPL_DEPTH_8U, 3)    
-    (image_width, image_height) = cv.GetSize(cv.fromarray(image))
-    #print (image_width, image_height)
-    rectangle = (((0, 0), (width, 0), (width, height), (0, height)), BLACK)
-    cv.FillConvexPoly(color_rectangle, *rectangle)
-    converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
-    for i in range(image_height):
-        for j in range(image_width):
-            if mask == None or mask[i][j]:
-                color = image[i][j]
-                hls = converted_image[i][j]
-                #print color
-                (h, l, s) = hls
-                hls = (h, l, s)
-                print hls
-                x = int(h)
-                y = int(l)
-                color = cv.Scalar(*color)
-                rectangle = (((x, y), (x, y), (x, y), (x, y)), color)
-                cv.FillConvexPoly(color_rectangle, *rectangle)
-    #x = (a - 1) / 2
-    #y = (a - 1) / 2
-    #white_dot = (x, y) 
-    #rectangle = ((white_dot, white_dot, white_dot, white_dot), WHITE)
-    cv.FillConvexPoly(color_rectangle, *rectangle)
-    return color_rectangle
 
 def figure_classifier(hierarchy, contours):
     (graph, cards) = find_cards(hierarchy)
@@ -374,36 +223,6 @@ def find_figures(hierarchy):
         difference.append(abs(left - right))
     return graph, nodes_on_level, difference
 
-def plot_intercontour_hist(image, outer_contour_id, contours, graph):
-    outer_contour = contours[outer_contour_id]
-    (x, y, width, height) = cv2.boundingRect(outer_contour)
-    subimage = get_subimage(image, (x, y), (x + width, y + height))
-    monochrome = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
-    mask = cv2.compare(monochrome, monochrome, cv2.CMP_EQ)
-    inverted_mask = mask.copy()
-    inner_contours = [contours[int(contour_id)] for contour_id in graph.successors(outer_contour_id)]
-    for i in range(width):
-        for j in range(height):
-            point = (x + i, y + j)
-            outer_contour_test = cv2.pointPolygonTest(outer_contour, point, 0)
-            inner_contours_test = -1
-            for inner_contour in inner_contours:
-                inner_contour_test = cv2.pointPolygonTest(inner_contour, point, 0)
-                if inner_contour_test > 0: 
-                    inner_contours_test = 1
-                    break
-            if outer_contour_test > 0 and inner_contours_test < 0:
-                inverted_mask[j][i] = 0
-            else:
-                mask[j][i] = 0
-    cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
-    inner_contour_id = str(inner_contours)
-    image_name = '%d-%s'%(outer_contour_id, inner_contours)
-    #cv2.imshow(image_name, subimage) 
-    #subhists = plot_hist(subimage, mask, image_name)
-    subhists = plot_hist_hls(subimage, mask, image_name)
-    return subhists, subimage, mask
-
 def two_equal_peaks_finder(difference):
     # two equal peaks
     level = None
@@ -423,28 +242,6 @@ def plot_figures_hist(contours, hierarchy, image):
         # intercontour gap
         subimage, mask = intercontour_gap_processing(image, contours, graph, nodes_on_level, level)
     return subimage, mask
-
-def draw_all_contours(image):
-    copy = image.copy()
-    result = adaptive_threshold(copy)
-    contours, hierarchy = cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    graph = get_hierarchy_tree(hierarchy)
-    plot_hierarchy_tree(graph)
-    #plot_figures_hist(contours, hierarchy, image)
-    feature_detector(image, hierarchy, contours)
-    color = (255, 255, 255)
-    for i, contour in enumerate(contours):
-        cv2.drawContours(copy, contours, i, color, 1)
-        #moments = cv2.moments(contour)
-        rect = cv2.boundingRect(contour)
-        (a, b, c, d) = rect
-        rectangle = ((a, b), (a + c, b + d), WHITE)
-        cv2.putText(copy, str(i), ((a + c), (b + d)), 1, 1, WHITE)
-        cv2.rectangle(copy, *rectangle)
-    return copy
-
-def draw_box(image, first, second):
-    cv2.rectangle(image, first, second, (0, 255, 0))
 
 def intercontour_gap_processing(image, contours, graph, nodes_on_level, level):
     # intercontour gap

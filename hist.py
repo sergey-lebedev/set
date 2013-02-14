@@ -2,7 +2,6 @@ import cv
 import cv2
 import time
 import math
-import numpy as np
 from plot import *
 from pygraphviz import *
 
@@ -22,20 +21,6 @@ first_anchor = None
 second_anchor = None
 box_drawing = False
 box = ((-1, -1), (0, 0))
-
-def adaptive_threshold(image):
-    result = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    result = cv2.medianBlur(result, 5)
-    #result = cv2.equalizeHist(result)
-    cv2.imshow('blured', result)
-    #result = cv2.inpaint(result, [], 10, cv2.INPAINT_NS)
-    adaptive_method = cv2.ADAPTIVE_THRESH_MEAN_C
-    threshold_type = cv2.THRESH_BINARY_INV
-    block_size = 7
-    c = 4
-    result = cv2.adaptiveThreshold(result, 255, adaptive_method, threshold_type, block_size, c)
-    cv2.imshow('threshold', result)
-    return result
 
 def canny(image):
     result = cv2.Canny(image, 0, 255)  
@@ -57,8 +42,8 @@ def get_hierarchy_tree(hierarchy):
             graph.add_edge([str(v_prev), index])
     return graph
     
-def find_cards(hierarchy):
-    (graph, nodes_on_level, difference) = find_figures(hierarchy)
+def find_cards(graph):
+    (nodes_on_level, difference) = find_figures(graph)
     # two equal peaks
     level = two_equal_peaks_finder(difference)
     steps = 2
@@ -74,10 +59,10 @@ def find_cards(hierarchy):
         #print parents
         sequence = parents
     print '%d card(s) detected'%len(sequence)
-    return graph, sequence
+    return sequence
 
-def figure_classifier(hierarchy, contours):
-    (graph, cards) = find_cards(hierarchy)
+def figure_classifier(graph, contours):
+    cards = find_cards(graph)
     figure_contours = []
     # collecting figures
     for card in cards:
@@ -102,8 +87,8 @@ def figure_classifier(hierarchy, contours):
     #print similarity_matrix
     plot_heatmap(similarity_matrix, n)
 
-def color_classifier(image, hierarchy, contours):
-    (graph, cards) = find_cards(hierarchy)
+def color_classifier(image, graph, contours):
+    cards = find_cards(graph)
     figure_hues = []
     # collecting figures
     for card in cards:
@@ -119,16 +104,16 @@ def color_classifier(image, hierarchy, contours):
     for i in range(len(figure_hues)):
         for j in range(len(figure_hues[:i + 1])):
             metric = 1 - cv2.compareHist(figure_hues[i], figure_hues[j], 3)
-            print metric
+            #print metric
             similarity_matrix[(i, j)] = metric
             similarity_matrix[(j, i)] = metric
     #print similarity_matrix
     plot_heatmap(similarity_matrix, n)
 
-def feature_detector(image, hierarchy, contours):
-    (graph, cards) = find_cards(hierarchy)
-    #figure_classifier(hierarchy, contours)
-    color_classifier(image, hierarchy, contours)
+def feature_detector(image, graph, contours):
+    cards = find_cards(graph)
+    #figure_classifier(graph, contours)
+    color_classifier(image, graph, contours)
     recognized_cards = []
     for card in cards:
         recognized_card = {}
@@ -194,7 +179,7 @@ def shading_feature_detector(graph, card, image, contours):
         p = h1 / (h1 + h2)
         result.append(p)
     result = sum(result)/len(result)
-    print result
+    #print result
     lb = 0.30
     ub = 0.77
     if result <= lb:
@@ -205,8 +190,7 @@ def shading_feature_detector(graph, card, image, contours):
         shading = 'solid'
     return shading
 
-def find_figures(hierarchy):
-    graph = get_hierarchy_tree(hierarchy)
+def find_figures(graph):
     root = 'root'
     queue = [root]
     nodes_on_level = []
@@ -221,7 +205,7 @@ def find_figures(hierarchy):
     for i in range(len(nodes_on_level) - 2):
         (left, right) = (len(nodes_on_level[i]), len(nodes_on_level[i+1]))
         difference.append(abs(left - right))
-    return graph, nodes_on_level, difference
+    return nodes_on_level, difference
 
 def two_equal_peaks_finder(difference):
     # two equal peaks
@@ -233,15 +217,6 @@ def two_equal_peaks_finder(difference):
         index = sliced.index(min_value)
         level = position + index + 1
     return level 
-
-def plot_figures_hist(contours, hierarchy, image):
-    (graph, nodes_on_level, difference) = find_figures(hierarchy)
-    # two equal peaks
-    level = two_equal_peaks_finder(difference)
-    if level:
-        # intercontour gap
-        subimage, mask = intercontour_gap_processing(image, contours, graph, nodes_on_level, level)
-    return subimage, mask
 
 def intercontour_gap_processing(image, contours, graph, nodes_on_level, level):
     # intercontour gap
@@ -262,14 +237,35 @@ def cards_recognition():
 def interior_processing():
     pass
 
-def get_subimage(image, first_anchor, second_anchor):
-    (fax, fay) = first_anchor
-    (sax, say) = second_anchor
-    width = abs(fax - sax)
-    height = abs(fay - say)
-    center = ((fax + sax) / 2, (fay + say) / 2)
-    subimage = cv2.getRectSubPix(image, (width, height), center)
-    return subimage
+def adaptive_threshold(image):
+    result = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    result = cv2.medianBlur(result, 5)
+    #result = cv2.equalizeHist(result)
+    cv2.imshow('blured', result)
+    #result = cv2.inpaint(result, [], 10, cv2.INPAINT_NS)
+    adaptive_method = cv2.ADAPTIVE_THRESH_MEAN_C
+    threshold_type = cv2.THRESH_BINARY_INV
+    block_size = 7
+    c = 4
+    result = cv2.adaptiveThreshold(result, 255, adaptive_method, threshold_type, block_size, c)
+    cv2.imshow('threshold', result)
+    return result
+
+def find_all_contours(image):
+    result = adaptive_threshold(image)
+    contours, hierarchy = cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    return contours, hierarchy
+
+def scene_analysis(image):
+    cards = []
+    figures = []
+    (contours, hierarchy) = find_all_contours(image)
+    graph = get_hierarchy_tree(hierarchy)
+    plot_hierarchy_tree(graph)
+    draw_all_contours(image, contours)
+    feature_detector(image, graph, contours)
+    #print cards
+    #print figures   
 
 def mouse_callback(event, x, y, flags, image):
     global first_anchor
@@ -292,12 +288,11 @@ def mouse_callback(event, x, y, flags, image):
         if first_anchor and second_anchor:
             subimage = get_subimage(image, *box)
             plot_hist(subimage)
-            subimage = draw_all_contours(subimage)
-            cv2.imshow('result', subimage)
+            scene_analysis(subimage)
             first_anchor = None
             second_anchor = None
 
-main_window = 'example4'
+main_window = 'main'
 temp = image.copy()
 while True:
     cv2.setMouseCallback(main_window, mouse_callback, image)

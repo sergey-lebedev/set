@@ -77,17 +77,18 @@ def plot_hierarchy_tree(graph):
     cv2.imshow('graph', resized_graph)
 
 def plot_heatmap(similarity_matrix, n):
-    pixels = max(1, min(screen_width / n, screen_height / n))
-    side = n * pixels
-    heatmap = cv.CreateImage((side, side), cv.IPL_DEPTH_8U, 1)
-    for i in range(n):
-        for j in range(n):
-            (a, b) = (i * pixels, j * pixels)
-            (c, d) = (a + pixels, b + pixels)
-            intensity = int((1 - similarity_matrix[(i, j)]) * 255)
-            rectangle = (((a, b), (c, b), (c, d), (a, d)), intensity)
-            cv.FillConvexPoly(heatmap, *rectangle)
-    cv.ShowImage('heatmap', heatmap)
+    if n != 0: 
+        pixels = max(1, min(screen_width / n, screen_height / n))
+        side = n * pixels
+        heatmap = cv.CreateImage((side, side), cv.IPL_DEPTH_8U, 1)
+        for i in range(n):
+            for j in range(n):
+                (a, b) = (i * pixels, j * pixels)
+                (c, d) = (a + pixels, b + pixels)
+                intensity = int((1 - similarity_matrix[(i, j)]) * 255)
+                rectangle = (((a, b), (c, b), (c, d), (a, d)), intensity)
+                cv.FillConvexPoly(heatmap, *rectangle)
+        cv.ShowImage('heatmap', heatmap)
 
 def plot_color_triangle(image, mask):
     a = screen_height
@@ -196,3 +197,25 @@ def plot_intercontour_hist(image, outer_contour_id, contours, graph):
 
 def draw_box(image, first, second):
     cv2.rectangle(image, first, second, (0, 255, 0))
+
+def draw_all_contours(image, contours):
+    copy = image.copy()
+    color = (255, 255, 255)
+    for i, contour in enumerate(contours):
+        cv2.drawContours(copy, contours, i, color, 1)
+        rect = cv2.boundingRect(contour)
+        (a, b, c, d) = rect
+        rectangle = ((a, b), (a + c, b + d), WHITE)
+        cv2.putText(copy, str(i), ((a + c), (b + d)), 1, 1, WHITE)
+        cv2.rectangle(copy, *rectangle)
+    cv2.imshow('result', copy)
+    return copy
+
+def plot_figures_hist(contours, hierarchy, image):
+    (graph, nodes_on_level, difference) = find_figures(hierarchy)
+    # two equal peaks
+    level = two_equal_peaks_finder(difference)
+    if level:
+        # intercontour gap
+        subimage, mask = intercontour_gap_processing(image, contours, graph, nodes_on_level, level)
+    return subimage, mask

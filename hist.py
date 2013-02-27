@@ -7,13 +7,13 @@ from pygraphviz import *
 
 images_dir = './samples'
 ##filename = 'Webcam-1355581255.png'
-#filename = 'Webcam-1355052953.png'
+filename = 'Webcam-1355052953.png'
 #filename = 'Webcam-1356160723.png'
 #filename = 'Webcam-1355053113.png'
 ##filename = 'Webcam-1356180412.png'
 ##filename = 'Webcam-1355052975.png'
 ##filename = 'Webcam-1356180892.png'
-filename = 'Webcam-1356203219.png'
+#filename = 'Webcam-1356203219.png'
 image = cv2.imread('/'.join((images_dir, filename)))
 cv2.moveWindow('experiment', 100, 100)
 
@@ -43,7 +43,7 @@ def get_hierarchy_tree(hierarchy):
     return graph
     
 def find_cards(graph):
-    (nodes_on_level, difference) = find_figures(graph)
+    (nodes_on_level, difference, figures) = find_figures(graph)
     # two equal peaks
     level = two_equal_peaks_finder(difference)
     steps = 2
@@ -56,10 +56,17 @@ def find_cards(graph):
             parent = graph.predecessors(node)[0]
             if parent not in parents:
                 parents.append(parent)
-        #print parents
+            #print parents
         sequence = parents
     print '%d card(s) detected'%len(sequence)
-    return sequence
+    #print cards
+    #print sequence
+    cards = []
+    for node in sequence:
+        card = {'id': node, 'figures': graph.successors(node)}
+        cards.append(card)
+    #print cards
+    return cards
 
 def figure_classifier(cards, graph, contours):
     figure_contours = []
@@ -87,45 +94,50 @@ def figure_classifier(cards, graph, contours):
     plot_heatmap(similarity_matrix, n)
 
 def color_classifier(image, cards, graph, contours):
-    figure_hues = []
+    hues = []
+    figure_hues = {}
     # collecting figures
     for card in cards:
         #print 'card: ', card
-        (sequence, number) = number_feature_detector(graph, card)
+        (sequence, number) = number_feature_detector(graph, card['id'])
         for node in sequence:
             #print 'node: ', node
             figure_outer_contour_id = int(graph.predecessors(node)[0])
             ((hue, l, s), subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
-            figure_hues.append(hue)
-    n = len(figure_hues)
+            hues.append(hue)
+            figure_hues[graph.predecessors(node)[0]] = hue
+    n = len(hues)
     similarity_matrix = {}
-    for i in range(len(figure_hues)):
-        for j in range(len(figure_hues[:i + 1])):
-            metric = 1 - cv2.compareHist(figure_hues[i], figure_hues[j], 3)
+    for i in range(len(hues)):
+        for j in range(len(hues[:i + 1])):
+            metric = 1 - cv2.compareHist(hues[i], hues[j], 2)
             #print metric
             similarity_matrix[(i, j)] = metric
             similarity_matrix[(j, i)] = metric
     #print similarity_matrix
     plot_heatmap(similarity_matrix, n)
+    return figure_hues
 
 def feature_detector(image, graph, contours):
     cards = find_cards(graph)
     #figure_classifier(cards, graph, contours)
-    color_classifier(image, cards, graph, contours)
+    figure_hues = color_classifier(image, cards, graph, contours)
     recognized_cards = []
     for card in cards:
-        recognized_card = {}
-        (sequence, number) = number_feature_detector(graph, card)
-        shading = shading_feature_detector(graph, card, image, contours)
-        recognized_card['number'] = number
-        recognized_card['shading'] = shading
-        recognized_cards.append(recognized_card)
-    print recognized_cards
+        (sequence, number) = number_feature_detector(graph, card['id'])
+        shading = shading_feature_detector(graph, card['id'], image, contours)
+        card['description'] = {}
+        card['description']['number'] = number
+        card['description']['shading'] = shading
+    # second pass for color color detection
+    color_feature_detector(cards, figure_hues)
+    print cards
 
 def number_feature_detector(graph, card):
     steps = 2
     #print card
     sequence = [card]
+    #print sequence
     while steps != 0 and sequence:
         steps -= 1
         childrens = []
@@ -136,14 +148,32 @@ def number_feature_detector(graph, card):
                 childrens.extend(child)
         sequence = childrens
         #print childrens
-    print '%d figure(s) on card'%len(sequence)
+    #print '%d figure(s) on card'%len(sequence)
     return sequence, len(sequence)
     
 def symbol_feature_detector():
     pass
 
-def color_feature_detector():
-    pass
+def color_feature_detector(cards, figure_hues):
+    shading_list = ('solid', 'striped', 'open')
+    figures = []
+    figures_list = []
+    color_list = []
+    for shading in shading_list:
+        for card in filter(lambda x: x['description']['shading'] == shading, cards):
+            figures_list.extend(card['figures'])
+    print figures_list
+    for i, figure_i in enumerate(figures_list[:-1]):
+        print 'i: ', figure_i
+        figure = {'id': figure_i, 'colors': []}
+        for figure_j in figures_list[i + 1:]:
+            print 'j: ', figure_j
+            if not color_list:
+                color_list.append(len(color_list))
+                figure['colors'] = {0 : 1}           
+            metric = 1 - cv2.compareHist(figure_hues[figure_i], figure_hues[figure_j], 2)
+            print metric 
+        figures.append(figure)
 
 def shading_feature_detector(graph, card, image, contours):
     card_id = int(card)
@@ -203,7 +233,8 @@ def find_figures(graph):
     for i in range(len(nodes_on_level) - 2):
         (left, right) = (len(nodes_on_level[i]), len(nodes_on_level[i+1]))
         difference.append(abs(left - right))
-    return nodes_on_level, difference
+    figures = []
+    return nodes_on_level, difference, figures
 
 def two_equal_peaks_finder(difference):
     # two equal peaks

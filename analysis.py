@@ -2,6 +2,10 @@ import cv
 import cv2
 import time
 import math
+import number
+import shading
+import color
+import symbol
 from plot import *
 from pygraphviz import *
 
@@ -76,130 +80,20 @@ def figure_classifier(cards, graph, contours):
     #print similarity_matrix
     plot_heatmap(similarity_matrix, n)
 
-def color_classifier(image, cards, graph, contours):
-    hues = []
-    figure_hues = {}
-    # collecting figures
-    for card in cards:
-        #print 'card: ', card
-        (sequence, number) = number_feature_detector(graph, card['id'])
-        for node in sequence:
-            #print 'node: ', node
-            figure_outer_contour_id = int(graph.predecessors(node)[0])
-            ((hue, l, s), subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
-            hues.append(hue)
-            figure_hues[graph.predecessors(node)[0]] = hue
-    n = len(hues)
-    similarity_matrix = {}
-    for i in range(len(hues)):
-        for j in range(len(hues[:i + 1])):
-            metric = 1 - cv2.compareHist(hues[i], hues[j], 2)
-            #print metric
-            similarity_matrix[(i, j)] = metric
-            similarity_matrix[(j, i)] = metric
-    #print similarity_matrix
-    plot_heatmap(similarity_matrix, n)
-    return figure_hues
-
 def feature_detector(image, graph, contours):
     cards = find_cards(graph)
     #figure_classifier(cards, graph, contours)
-    figure_hues = color_classifier(image, cards, graph, contours)
+    figure_hues = color.classifier(image, cards, graph, contours)
     recognized_cards = []
     for card in cards:
-        (sequence, number) = number_feature_detector(graph, card['id'])
-        shading = shading_feature_detector(graph, card['id'], image, contours)
+        (sequence, NUMBER) = number.feature_detector(graph, card['id'])
+        SHADING = shading.feature_detector(graph, card['id'], image, contours)
         card['description'] = {}
-        card['description']['number'] = number
-        card['description']['shading'] = shading
+        card['description']['number'] = NUMBER
+        card['description']['shading'] = SHADING
     # second pass for color color detection
-    color_feature_detector(cards, figure_hues)
+    color.feature_detector(cards, figure_hues)
     print cards
-
-def number_feature_detector(graph, card):
-    steps = 2
-    #print card
-    sequence = [card]
-    #print sequence
-    while steps != 0 and sequence:
-        steps -= 1
-        childrens = []
-        for node in sequence:
-            #print node
-            child = graph.successors(node)
-            if child not in childrens:
-                childrens.extend(child)
-        sequence = childrens
-        #print childrens
-    #print '%d figure(s) on card'%len(sequence)
-    return sequence, len(sequence)
-    
-def symbol_feature_detector():
-    pass
-
-def color_feature_detector(cards, figure_hues):
-    shading_list = ('solid', 'striped', 'open')
-    figures = []
-    figures_list = []
-    color_list = []
-    for shading in shading_list:
-        for card in filter(lambda x: x['description']['shading'] == shading, cards):
-            figures_list.extend(card['figures'])
-    print figures_list
-    for i, figure_i in enumerate(figures_list[:-1]):
-        print 'i: ', figure_i
-        figure = {'id': figure_i, 'colors': []}
-        for figure_j in figures_list[i + 1:]:
-            print 'j: ', figure_j
-            if not color_list:
-                color_list.append(len(color_list))
-                figure['colors'] = {0 : 1}           
-            metric = 1 - cv2.compareHist(figure_hues[figure_i], figure_hues[figure_j], 2)
-            print metric 
-        figures.append(figure)
-
-def shading_feature_detector(graph, card, image, contours):
-    card_id = int(card)
-    ((h, background_lightness, s), subimage, mask) = plot_intercontour_hist(image, card_id, contours, graph)
-    cv2.imshow('%d-%d: '%(int(card), int(card)), subimage)
-    #print subimage_hsv
-    steps = 2
-    #print card
-    sequence = [card]
-    while steps != 0 and sequence:
-        steps -= 1
-        childrens = []
-        for node in sequence:
-            #print node
-            child = graph.successors(node)
-            if child not in childrens:
-                childrens.extend(child)
-        sequence = childrens
-        #print childrens
-    result = []
-    for node in sequence:
-        #print 'node: ', node
-        figure_outer_contour_id = int(graph.predecessors(node)[0])
-        figure_inner_contour_id = int(node)
-        ((h, contour_lightness, s), subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
-        cv2.imshow('%d-%d: '%(int(card), figure_outer_contour_id), subimage)
-        ((h, lightness, s), subimage, mask) = plot_intercontour_hist(image, figure_inner_contour_id, contours, graph)
-        cv2.imshow('%d-%d: '%(int(card), figure_inner_contour_id), subimage)
-        h1 = cv2.compareHist(lightness, contour_lightness, 2)
-        h2 = cv2.compareHist(lightness, background_lightness, 2)
-        p = h1 / (h1 + h2)
-        result.append(p)
-    result = sum(result)/len(result)
-    #print result
-    lb = 0.30
-    ub = 0.77
-    if result <= lb:
-        shading = 'open'
-    elif lb < result <= ub:
-        shading = 'striped'
-    elif result > ub:
-        shading = 'solid'
-    return shading
 
 def find_figures(graph):
     root = 'root'

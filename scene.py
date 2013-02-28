@@ -13,21 +13,6 @@ def canny(image):
     result = cv2.Canny(image, 0, 255)  
     cv2.imshow('canny', result)
     return result
-
-def get_hierarchy_tree(hierarchy):
-    graph = AGraph(directed=True)
-    root = 'root'
-    graph.add_node(root)
-    sequence = hierarchy[0]
-    for i, node in enumerate(sequence):
-        index = str(i)
-        (h_next, h_prev, v_next, v_prev) = node
-        graph.add_node(index)
-        if v_prev == -1:
-            graph.add_edge([root, index])
-        else:
-            graph.add_edge([str(v_prev), index])
-    return graph
     
 def find_cards(graph):
     (nodes_on_level, difference, figures) = find_figures(graph)
@@ -54,46 +39,6 @@ def find_cards(graph):
         cards.append(card)
     #print cards
     return cards
-
-def figure_classifier(cards, graph, contours):
-    figure_contours = []
-    # collecting figures
-    for card in cards:
-        (sequence, number) = number_feature_detector(graph, card)
-        for node in sequence:
-            figure_outer_contour_id = int(graph.predecessors(node)[0])
-            figure_contours.append(figure_outer_contour_id)
-    n = len(figure_contours)
-    # adjacency matrix
-    similarity_matrix = {}
-    metric_type = cv.CV_CONTOURS_MATCH_I2
-    for i, ci in enumerate(figure_contours):
-        moments = cv2.moments(contours[ci])
-        print moments
-        print cv2.HuMoments(moments)
-        for j, cj in enumerate(figure_contours[:i + 1]):
-            metric_ij = cv2.matchShapes(contours[ci], contours[cj], metric_type, 0)
-            metric_ji = cv2.matchShapes(contours[cj], contours[ci], metric_type, 0)
-            metric = 1 - (metric_ij + metric_ji) / 2
-            similarity_matrix[(i, j)] = metric
-            similarity_matrix[(j, i)] = metric
-    #print similarity_matrix
-    plot_heatmap(similarity_matrix, n)
-
-def feature_detector(image, graph, contours):
-    cards = find_cards(graph)
-    #figure_classifier(cards, graph, contours)
-    figure_hues = color.classifier(image, cards, graph, contours)
-    recognized_cards = []
-    for card in cards:
-        (sequence, NUMBER) = number.feature_detector(graph, card['id'])
-        SHADING = shading.feature_detector(graph, card['id'], image, contours)
-        card['description'] = {}
-        card['description']['number'] = NUMBER
-        card['description']['shading'] = SHADING
-    # second pass for color color detection
-    color.feature_detector(cards, figure_hues)
-    print cards
 
 def find_figures(graph):
     root = 'root'
@@ -162,7 +107,37 @@ def find_all_contours(image):
     contours, hierarchy = cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     return contours, hierarchy
 
-def scene_analysis(image):
+def feature_detector(image, graph, contours):
+    cards = find_cards(graph)
+    #figure_classifier(cards, graph, contours)
+    figure_hues = color.classifier(image, cards, graph, contours)
+    recognized_cards = []
+    for card in cards:
+        (sequence, NUMBER) = number.feature_detector(graph, card['id'])
+        SHADING = shading.feature_detector(graph, card['id'], image, contours)
+        card['description'] = {}
+        card['description']['number'] = NUMBER
+        card['description']['shading'] = SHADING
+    # second pass for color color detection
+    color.feature_detector(cards, figure_hues)
+    print cards
+
+def get_hierarchy_tree(hierarchy):
+    graph = AGraph(directed=True)
+    root = 'root'
+    graph.add_node(root)
+    sequence = hierarchy[0]
+    for i, node in enumerate(sequence):
+        index = str(i)
+        (h_next, h_prev, v_next, v_prev) = node
+        graph.add_node(index)
+        if v_prev == -1:
+            graph.add_edge([root, index])
+        else:
+            graph.add_edge([str(v_prev), index])
+    return graph
+
+def analysis(image):
     cards = []
     figures = []
     (contours, hierarchy) = find_all_contours(image)

@@ -1,6 +1,6 @@
 import cv2
+import scene
 from plot import *
-from analysis import *
 
 images_dir = './samples'
 ##filename = 'Webcam-1355581255.png'
@@ -40,7 +40,7 @@ def mouse_callback(event, x, y, flags, image):
         if first_anchor and second_anchor:
             subimage = get_subimage(image, *box)
             plot_hist(subimage)
-            scene_analysis(subimage)
+            scene.analysis(subimage)
             first_anchor = None
             second_anchor = None
 

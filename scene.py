@@ -2,72 +2,13 @@ import cv
 import cv2
 import time
 import math
-import number
-import shading
 import color
+import number
 import symbol
+import shading
 from plot import *
+from find import *
 from pygraphviz import *
-
-def canny(image):
-    result = cv2.Canny(image, 0, 255)  
-    cv2.imshow('canny', result)
-    return result
-    
-def find_cards(graph):
-    (nodes_on_level, difference, figures) = find_figures(graph)
-    # two equal peaks
-    level = two_equal_peaks_finder(difference)
-    steps = 2
-    sequence = []
-    if level: sequence = nodes_on_level[level]
-    while steps != 0 and sequence:
-        steps -= 1
-        parents = []
-        for node in sequence:
-            parent = graph.predecessors(node)[0]
-            if parent not in parents:
-                parents.append(parent)
-            #print parents
-        sequence = parents
-    print '%d card(s) detected'%len(sequence)
-    #print cards
-    #print sequence
-    cards = []
-    for node in sequence:
-        card = {'id': node, 'figures': graph.successors(node)}
-        cards.append(card)
-    #print cards
-    return cards
-
-def find_figures(graph):
-    root = 'root'
-    queue = [root]
-    nodes_on_level = []
-    while queue:
-        sequence = []
-        for node in queue:
-            sequence.extend(graph.successors(node))
-        nodes_on_level.append(sequence)
-        queue = sequence
-    #print nodes_on_level
-    difference = []
-    for i in range(len(nodes_on_level) - 2):
-        (left, right) = (len(nodes_on_level[i]), len(nodes_on_level[i+1]))
-        difference.append(abs(left - right))
-    figures = []
-    return nodes_on_level, difference, figures
-
-def two_equal_peaks_finder(difference):
-    # two equal peaks
-    level = None
-    position = 2
-    sliced = difference[position:]
-    if sliced:
-        min_value = min(sliced)
-        index = sliced.index(min_value)
-        level = position + index + 1
-    return level 
 
 def intercontour_gap_processing(image, contours, graph, nodes_on_level, level):
     # intercontour gap
@@ -81,12 +22,6 @@ def card_processing(image, figure_outer_contour_id, contours, graph):
     # card background
     card_inner_contour_id = int(graph.predecessors(figure_outer_contour_id)[0])
     plot_intercontour_hist(image, card_inner_contour_id, contours, graph)
-
-def cards_recognition():
-    return recognized_cards
-
-def interior_processing():
-    pass
 
 def adaptive_threshold(image):
     result = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

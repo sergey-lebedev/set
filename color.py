@@ -2,26 +2,60 @@ import cv2
 import number
 from plot import *
 
+def normalize_colors(colors):
+    # normalize
+    summ = sum(colors.values())
+    print colors
+    print summ
+    if summ != 0:
+        for color in colors: colors[color] /= summ
+    print colors
+    return colors
+
+def calculate_colors(metrics, figures, color_list):
+    colors = {}
+    # cummulative sum
+    for color in color_list:
+        summ = 0
+        for i, figure in enumerate(figures):
+            if figure['colors'].has_key(color):
+                summ += metrics[i] * figure['colors'][color]
+        colors[color] = summ
+    return colors
+
 def feature_detector(cards, figure_hues):
     shading_list = ('solid', 'striped', 'open')
     figures = []
     figures_list = []
-    color_list = []
     for shading in shading_list:
         for card in filter(lambda x: x['description']['shading'] == shading, cards):
             figures_list.extend(card['figures'])
     print figures_list
-    for i, figure_i in enumerate(figures_list[:-1]):
-        print 'i: ', figure_i
-        figure = {'id': figure_i, 'colors': []}
-        for figure_j in figures_list[i + 1:]:
-            print 'j: ', figure_j
-            if not color_list:
-                color_list.append(len(color_list))
-                figure['colors'] = {0 : 1}           
-            metric = 1 - cv2.compareHist(figure_hues[figure_i], figure_hues[figure_j], 2)
-            print metric 
+    # init colors
+    color_list = [0]
+    if figures_list:
+        figure_id = figures_list[0]
+        figure = {'id': figure_id, 'colors': {0: 1.0}}
         figures.append(figure)
+    # comparing colors
+    for i, figure_i in enumerate(figures_list[1:]):
+        print 'i: ', figure_i
+        figure = {'id': figure_i}
+        metrics = [] 
+        for figure_j in figures_list[:i + 1]:
+            print 'j: ', figure_j      
+            metric = 1 - cv2.compareHist(figure_hues[figure_i], figure_hues[figure_j], 3)
+            print metric
+            metrics.append(metric)
+        colors = calculate_colors(metrics, figures[:i + 1], color_list)
+        if max(metrics) < 0.30:
+            color = len(color_list)
+            color_list.append(color)
+            colors[color] = 1.0
+        colors = normalize_colors(colors)
+        figure['colors'] = colors      
+        figures.append(figure)
+    print figures
 
 def classifier(image, cards, graph, contours):
     hues = []

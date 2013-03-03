@@ -46,7 +46,7 @@ def search_set(cards):
     ids = []
     sets = []
     n = len(cards)
-    if n < set_number: return sets
+    if n < set_number: return sets, ids
     for indexes in itertools.combinations(range(n), set_number):
         multiplet = [cards[i] for i in indexes]
         if is_set(multiplet):

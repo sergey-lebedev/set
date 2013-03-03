@@ -71,7 +71,7 @@ while cards or deck:
     #print '%d cards in a deck' % len(deck)
 
     # search set
-    sets = search_set(cards)
+    sets, card_ids = search_set(cards)
     #print sets
     #print 'number of sets: %d' % len(sets)
     draw_ordered_slots(cards)

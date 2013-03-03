@@ -5,11 +5,11 @@ from plot import *
 def normalize_colors(colors):
     # normalize
     summ = sum(colors.values())
-    print colors
-    print summ
+    #print colors
+    #print summ
     if summ != 0:
         for color in colors: colors[color] /= summ
-    print colors
+    #print colors
     return colors
 
 def calculate_colors(metrics, figures, color_list):
@@ -23,7 +23,7 @@ def calculate_colors(metrics, figures, color_list):
         colors[color] = summ
     return colors
 
-def feature_detector(cards, figure_hues):
+def classifier(cards, figure_hues):
     shading_list = ('solid', 'striped', 'open')
     figures = []
     figures_list = []
@@ -55,9 +55,27 @@ def feature_detector(cards, figure_hues):
         colors = normalize_colors(colors)
         figure['colors'] = colors      
         figures.append(figure)
-    print figures
+    #print figures
+    # card color detector
+    for card in cards:
+        figure_list = card['figures']
+        card_colors = dict([(i, 0) for i in color_list])
+        #print card_colors
+        for figure_id in figure_list:
+            figure = filter(lambda x: x['id'] == figure_id, figures)[0]
+            #print figure
+            for color in color_list:
+                if figure['colors'].has_key(color):
+                   card_colors[color] += figure['colors'][color]     
+        card_colors = normalize_colors(card_colors)
+        #print card_colors
+        ccv = card_colors.values()
+        card_color = card_colors.keys()[ccv.index(max(ccv))]
+        #print card_color
+        card['description']['color'] = card_color    
+    return cards
 
-def classifier(image, cards, graph, contours):
+def feature_detector(image, cards, graph, contours):
     hues = []
     figure_hues = {}
     # collecting figures
@@ -79,5 +97,5 @@ def classifier(image, cards, graph, contours):
             similarity_matrix[(i, j)] = metric
             similarity_matrix[(j, i)] = metric
     #print similarity_matrix
-    plot_heatmap(similarity_matrix, n)
+    #plot_heatmap(similarity_matrix, n)
     return figure_hues

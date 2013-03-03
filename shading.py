@@ -4,7 +4,7 @@ from plot import *
 def feature_detector(graph, card, image, contours):
     card_id = int(card)
     ((h, background_lightness, s), subimage, mask) = plot_intercontour_hist(image, card_id, contours, graph)
-    cv2.imshow('%d-%d: '%(int(card), int(card)), subimage)
+    #cv2.imshow('%d-%d: '%(int(card), int(card)), subimage)
     #print subimage_hsv
     steps = 2
     #print card
@@ -25,9 +25,9 @@ def feature_detector(graph, card, image, contours):
         figure_outer_contour_id = int(graph.predecessors(node)[0])
         figure_inner_contour_id = int(node)
         ((h, contour_lightness, s), subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
-        cv2.imshow('%d-%d: '%(int(card), figure_outer_contour_id), subimage)
+        #cv2.imshow('%d-%d: '%(int(card), figure_outer_contour_id), subimage)
         ((h, lightness, s), subimage, mask) = plot_intercontour_hist(image, figure_inner_contour_id, contours, graph)
-        cv2.imshow('%d-%d: '%(int(card), figure_inner_contour_id), subimage)
+        #cv2.imshow('%d-%d: '%(int(card), figure_inner_contour_id), subimage)
         h1 = cv2.compareHist(lightness, contour_lightness, 2)
         h2 = cv2.compareHist(lightness, background_lightness, 2)
         p = h1 / (h1 + h2)

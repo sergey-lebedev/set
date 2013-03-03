@@ -1,5 +1,6 @@
 import cv
 import cv2
+import set
 import time
 import math
 import color
@@ -50,12 +51,16 @@ def feature_detector(image, graph, contours):
     for card in cards:
         (sequence, NUMBER) = number.feature_detector(graph, card['id'])
         SHADING = shading.feature_detector(graph, card['id'], image, contours)
+        COLOR = None
         card['description'] = {}
         card['description']['number'] = NUMBER
         card['description']['shading'] = SHADING
+        card['description']['color'] = COLOR
+        card['description']['symbol'] = None
     # second pass for color color detection
     color.feature_detector(cards, figure_hues)
     print cards
+    return cards
 
 def get_hierarchy_tree(hierarchy):
     graph = AGraph(directed=True)
@@ -79,6 +84,10 @@ def analysis(image):
     graph = get_hierarchy_tree(hierarchy)
     plot_hierarchy_tree(graph)
     draw_all_contours(image, contours)
-    feature_detector(image, graph, contours)
+    cards = feature_detector(image, graph, contours)
+    playing_cards = [card['description'] for card in cards]
+    sets, ids = set.search_set(playing_cards)
+    #print sets
+    print ids
     #print cards
     #print figures

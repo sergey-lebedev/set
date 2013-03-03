@@ -20,7 +20,7 @@ def get_subimage(image, first_anchor, second_anchor):
 def plot_hist_hls(image, mask=None, image_name=''):
     converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
     (hue, lightness, saturation) = cv2.split(converted_image)
-    cv2.imshow(image_name, lightness)
+    #cv2.imshow(image_name, lightness)
     subhists = []
     for i, slice in enumerate((hue, lightness, saturation)):
         subhist = cv2.calcHist([slice], [0], mask, [256], [0, 255])
@@ -63,7 +63,7 @@ def plot_hist(image, mask=None, image_name=''):
     #color_triangle = plot_color_triangle(image, mask)
     #cv.ShowImage('%s color triangle: '%image_name, color_triangle)
     color_rectangle = plot_color_rectangle(image, mask)
-    cv.ShowImage('%s color triangle: '%image_name, color_rectangle)
+    #cv.ShowImage('%s color triangle: '%image_name, color_rectangle)
     return subhists
 
 def plot_hierarchy_tree(graph):

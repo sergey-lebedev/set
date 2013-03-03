@@ -219,3 +219,9 @@ def plot_figures_hist(contours, hierarchy, image):
         # intercontour gap
         subimage, mask = intercontour_gap_processing(image, contours, graph, nodes_on_level, level)
     return subimage, mask
+
+def highlight_contours(image, contours, ids):
+    copy = image.copy()
+    color = (0, 0, 255)
+    for i in ids: cv2.drawContours(copy, contours, i, color, 2)
+    cv2.imshow('backlighted', copy)

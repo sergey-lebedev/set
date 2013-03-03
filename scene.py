@@ -86,8 +86,8 @@ def analysis(image):
     draw_all_contours(image, contours)
     cards = feature_detector(image, graph, contours)
     playing_cards = [card['description'] for card in cards]
-    sets, ids = set.search_set(playing_cards)
-    #print sets
-    print ids
+    sets, card_ids = set.search_set(playing_cards)
+    contour_ids = map(lambda x: int(cards[x]['id']), card_ids[0])
+    highlight_contours(image, contours, contour_ids)
     #print cards
     #print figures

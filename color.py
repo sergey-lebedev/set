@@ -30,7 +30,7 @@ def classifier(cards, figure_hues):
     for shading in shading_list:
         for card in filter(lambda x: x['description']['shading'] == shading, cards):
             figures_list.extend(card['figures'])
-    print figures_list
+    #print figures_list
     # init colors
     color_list = [0]
     if figures_list:
@@ -39,13 +39,13 @@ def classifier(cards, figure_hues):
         figures.append(figure)
     # comparing colors
     for i, figure_i in enumerate(figures_list[1:]):
-        print 'i: ', figure_i
+        #print 'i: ', figure_i
         figure = {'id': figure_i}
         metrics = [] 
         for figure_j in figures_list[:i + 1]:
-            print 'j: ', figure_j      
+            #print 'j: ', figure_j      
             metric = 1 - cv2.compareHist(figure_hues[figure_i], figure_hues[figure_j], 3)
-            print metric
+            #print metric
             metrics.append(metric)
         colors = calculate_colors(metrics, figures[:i + 1], color_list)
         if max(metrics) < 0.30:

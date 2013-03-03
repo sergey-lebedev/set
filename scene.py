@@ -45,7 +45,7 @@ def find_all_contours(image):
 
 def feature_detector(image, graph, contours):
     cards = find_cards(graph)
-    #figure_classifier(cards, graph, contours)
+    figure_moments = [] #symbol.feature_detector(cards, graph, contours)
     figure_hues = color.feature_detector(image, cards, graph, contours)
     recognized_cards = []
     for card in cards:
@@ -55,9 +55,9 @@ def feature_detector(image, graph, contours):
         card['description'] = {}
         card['description']['number'] = NUMBER
         card['description']['shading'] = SHADING
-        card['description']['symbol'] = None
     # second pass for color color detection
     cards = color.classifier(cards, figure_hues)
+    cards = symbol.classifier(cards, contours)
     print cards
     return cards
 

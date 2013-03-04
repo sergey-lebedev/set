@@ -17,10 +17,12 @@ def calculate_colors(metrics, figures, color_list):
     # cummulative sum
     for color in color_list:
         summ = 0
+        counter = 0
         for i, figure in enumerate(figures):
             if figure['colors'].has_key(color):
                 summ += metrics[i] * figure['colors'][color]
-        colors[color] = summ
+                counter += 1
+        colors[color] = summ / counter 
     return colors
 
 def classifier(cards, figure_hues):

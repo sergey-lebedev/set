@@ -18,10 +18,12 @@ def calculate_symbols(metrics, figures, symbol_list):
     # cummulative sum
     for symbol in symbol_list:
         summ = 0
+        counter = 0
         for i, figure in enumerate(figures):
             if figure['symbols'].has_key(symbol):
                 summ += metrics[i] * figure['symbols'][symbol]
-        symbols[symbol] = summ
+                counter += 1
+        symbols[symbol] = summ / counter
     return symbols
 
 def classifier(cards, contours):
@@ -57,7 +59,6 @@ def classifier(cards, contours):
             symbol = len(symbol_list)
             symbol_list.append(symbol)
             symbols[symbol] = 1.0
-        print symbols
         symbols = normalize_symbols(symbols)
         figure['symbols'] = symbols   
         figures.append(figure)
@@ -72,7 +73,7 @@ def classifier(cards, contours):
             #print figure
             for symbol in symbol_list:
                 if figure['symbols'].has_key(symbol):
-                   card_symbols[symbol] += figure['symbols'][symbol]     
+                    card_symbols[symbol] += figure['symbols'][symbol]
         card_symbols = normalize_symbols(card_symbols)
         #print card_symbols
         csv = card_symbols.values()

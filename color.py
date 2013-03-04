@@ -81,13 +81,12 @@ def feature_detector(image, cards, graph, contours):
     # collecting figures
     for card in cards:
         #print 'card: ', card
-        (sequence, dummy) = number.feature_detector(graph, card['id'])
-        for node in sequence:
-            #print 'node: ', node
-            figure_outer_contour_id = int(graph.predecessors(node)[0])
+        for figure_id in card['figures']:
+            #print 'figure: ', figure
+            figure_outer_contour_id = int(figure_id)
             ((hue, l, s), subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
             hues.append(hue)
-            figure_hues[graph.predecessors(node)[0]] = hue
+            figure_hues[figure_id] = hue
     n = len(hues)
     similarity_matrix = {}
     for i in range(len(hues)):

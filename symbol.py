@@ -28,8 +28,13 @@ def classifier(cards, contours):
     figures = []
     figures_list = []
     metric_type = cv.CV_CONTOURS_MATCH_I2
-    for card in cards:
-        figures_list.extend(card['figures'])
+    max_number = max(map(lambda x: x['description']['number'], cards))
+    number_list = range(max_number + 1)
+    number_list.reverse()
+    for number in number_list: 
+        for card in filter(lambda x: x['description']['number'] == number, cards):
+            figures_list.extend(card['figures'])
+    print figures_list
     #print figures_list
     # init symbols
     symbol_list = [0]
@@ -48,10 +53,11 @@ def classifier(cards, contours):
             print metric
             metrics.append(metric)
         symbols = calculate_symbols(metrics, figures[:i + 1], symbol_list)
-        if max(metrics) < 0.30:
+        if max(metrics) < 0.66:
             symbol = len(symbol_list)
             symbol_list.append(symbol)
             symbols[symbol] = 1.0
+        print symbols
         symbols = normalize_symbols(symbols)
         figure['symbols'] = symbols   
         figures.append(figure)
@@ -81,14 +87,13 @@ def feature_detector(cards, graph, contours):
     # collecting figures
     for card in cards:
         #print 'card: ', card
-        (sequence, dummy) = number.feature_detector(graph, card['id'])
-        for node in sequence:
-            #print 'node: ', node
-            figure_outer_contour_id = int(graph.predecessors(node)[0])
+        for figure_id in card['figures']:
+            #print 'figure: ', figure
+            figure_outer_contour_id = int(figure_id)
             figure_contours.append(figure_outer_contour_id)
             moments = cv2.moments(contours[figure_outer_contour_id])
             moments = cv2.HuMoments(moments)
-            figure_moments[graph.predecessors(node)[0]] = moments
+            figure_moments[figure_id] = moments
     n = len(figure_contours)
     # adjacency matrix
     similarity_matrix = {}

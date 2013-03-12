@@ -47,14 +47,14 @@ def mocm(element, clusters, values):
     for cluster in clusters:
         measure = distance(element, cluster_center(cluster, values))    
         measures.append(measure)
-    print measures
+    #print measures
     summ = sum(measures)
-    print summ
+    #print summ
     if summ != 0:
         measures = map(lambda x: summ - x, measures)
         summ = sum(measures)
         measures = map(lambda x: x / summ, measures)
-    print measures
+    #print measures
     return measures
 
 def normalize_symbols(symbols):

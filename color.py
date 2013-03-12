@@ -50,7 +50,7 @@ def classifier(cards, figure_hues):
             #print metric
             metrics.append(metric)
         colors = calculate_colors(metrics, figures[:i + 1], color_list)
-        if max(metrics) < 0.30:
+        if max(metrics) < 0.20:
             color = len(color_list)
             color_list.append(color)
             colors[color] = 1.0

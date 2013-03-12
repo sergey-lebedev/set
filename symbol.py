@@ -3,6 +3,55 @@ import cv2
 import number
 from plot import *
 
+def distance(a, b):
+    result = abs(a - b)    
+    return result
+
+def cluster_center(cluster, values):
+    accumulator = 0
+    for member in cluster:
+        accumulator += values[member]
+    center = accumulator / len(cluster)
+    return center
+
+def forel(elements, values):
+    #print elements
+    #print values
+    queue = elements[:]
+    r = 0.10
+    clusters = []
+    while queue:
+        final = None
+        i = queue.pop(0)
+        #print queue
+        cluster = []
+        cluster.append(i)
+        initial = values[i]
+        while initial != final:
+            initial = cluster_center(cluster, values)
+            #print 'initial:', initial
+            for idx, j in enumerate(queue):
+                if distance(initial, values[j]) < r:
+                    queue.pop(idx)
+                    cluster.append(j)
+                    break
+            final = cluster_center(cluster, values)
+            #print 'final:', final
+        #print cluster    
+        clusters.append(cluster)
+    print clusters
+    return clusters
+
+def mocm(element, clusters, values):
+    measures = []
+    for cluster in clusters:
+        measure = distance(element, cluster_center(cluster, values))    
+        measures.append(measure)
+    summ = sum(measures)
+    if summ != 0:
+        measures = map(lambda x: x / summ, measures)
+    return measures
+
 def normalize_symbols(symbols):
     # normalize
     summ = sum(symbols.values())
@@ -26,7 +75,7 @@ def calculate_symbols(metrics, figures, symbol_list):
         symbols[symbol] = summ / counter
     return symbols
 
-def classifier(cards, contours):
+def classifier(cards, contours, figure_moments):
     figures = []
     figures_list = []
     metric_type = cv.CV_CONTOURS_MATCH_I2
@@ -36,30 +85,17 @@ def classifier(cards, contours):
     for number in number_list: 
         for card in filter(lambda x: x['description']['number'] == number, cards):
             figures_list.extend(card['figures'])
-    print figures_list
     #print figures_list
+    # clustering
+    clusters = forel(figures_list, figure_moments)
     # init symbols
-    symbol_list = [0]
-    if figures_list:
-        figure_id = figures_list[0]
-        figure = {'id': figure_id, 'symbols': {0: 1.0}}
-        figures.append(figure)
-    # comparing symbols
-    for i, figure_i in enumerate(figures_list[1:]):
-        print 'i: ', figure_i
-        figure = {'id': figure_i}
-        metrics = [] 
-        for figure_j in figures_list[:i + 1]:
-            print 'j: ', figure_j      
-            metric = 1 - cv2.matchShapes(contours[int(figure_i)], contours[int(figure_j)], metric_type, 0)
-            print metric
-            metrics.append(metric)
-        symbols = calculate_symbols(metrics, figures[:i + 1], symbol_list)
-        if max(metrics) < 0.66:
-            symbol = len(symbol_list)
-            symbol_list.append(symbol)
-            symbols[symbol] = 1.0
-        symbols = normalize_symbols(symbols)
+    symbol_list = range(len(clusters))
+    for figure_id in figures_list:
+        figure = {'id': figure_id, 'symbols': {}}
+        measures = mocm(figure_moments[figure_id], clusters, figure_moments)
+        symbols = {}
+        for symbol in symbol_list:
+            symbols[symbol] = measures[symbol]
         figure['symbols'] = symbols   
         figures.append(figure)
     print figures
@@ -92,9 +128,16 @@ def feature_detector(cards, graph, contours):
             #print 'figure: ', figure
             figure_outer_contour_id = int(figure_id)
             figure_contours.append(figure_outer_contour_id)
-            moments = cv2.moments(contours[figure_outer_contour_id])
-            moments = cv2.HuMoments(moments)
-            figure_moments[figure_id] = moments
+            contour = contours[figure_outer_contour_id]
+            #moments = cv2.moments(contours[figure_outer_contour_id])
+            #moments = cv2.HuMoments(moments)
+            #figure_moments[figure_id] = moments
+            square = cv2.contourArea(contour)
+            rect = cv2.minAreaRect(contour)
+            box = cv.BoxPoints(rect)
+            box = np.array([[np.int0(point)] for point in box])
+            min_rect_square = cv2.contourArea(box)
+            figure_moments[figure_id] = (min_rect_square - square) / square
     n = len(figure_contours)
     # adjacency matrix
     similarity_matrix = {}
@@ -111,5 +154,5 @@ def feature_detector(cards, graph, contours):
             similarity_matrix[(j, i)] = metric
     #print similarity_matrix
     #plot_heatmap(similarity_matrix, n)
-    print figure_moments
+    #print figure_moments
     return figure_moments

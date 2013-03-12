@@ -2,13 +2,13 @@ import cv2
 import scene
 from plot import *
 
-debug = True
+debug = not False
 
 images_dir = './samples'
 ##filename = 'Webcam-1355581255.png'
-filename = 'Webcam-1355052953.png'
+#filename = 'Webcam-1355052953.png'
 #filename = 'Webcam-1356160723.png'
-#filename = 'Webcam-1355053113.png'
+filename = 'Webcam-1355053113.png'
 ##filename = 'Webcam-1356180412.png'
 ##filename = 'Webcam-1355052975.png'
 ##filename = 'Webcam-1356180892.png'

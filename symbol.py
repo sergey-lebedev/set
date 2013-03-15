@@ -17,29 +17,25 @@ def cluster_center(cluster, values):
 def forel(elements, values):
     #print elements
     #print values
-    queue = elements[:]
+    sequence = set(elements)
     r = 0.10
     clusters = []
-    while queue:
+    while sequence:
         final = None
-        i = queue.pop(0)
-        #print queue
-        cluster = []
-        cluster.append(i)
+        #print sequence
+        i = list(sequence)[0]
+        cluster = set([i])
         initial = values[i]
         while initial != final:
             initial = cluster_center(cluster, values)
             #print 'initial:', initial
-            for idx, j in enumerate(queue):
-                if distance(initial, values[j]) < r:
-                    queue.pop(idx)
-                    cluster.append(j)
-                    break
+            cluster = set(filter(lambda x: distance(initial, values[x]) < r, sequence))
             final = cluster_center(cluster, values)
             #print 'final:', final
-        #print cluster    
+        #print cluster
+        sequence -= cluster
         clusters.append(cluster)
-    print clusters
+    #print clusters
     return clusters
 
 def mocm(element, clusters, values):

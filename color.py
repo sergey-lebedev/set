@@ -2,6 +2,57 @@ import cv2
 import number
 from plot import *
 
+def distance(a, b, L):
+    d = abs(a - b)
+    result = min(d, L - d)    
+    return result
+
+def cluster_center(cluster, values):
+    accumulator = 0
+    for member in cluster:
+        accumulator += values[member]
+    center = accumulator / len(cluster)
+    return center
+
+def forel(elements, values):
+    #print elements
+    #print values
+    sequence = set(elements)
+    r = 0.10
+    clusters = []
+    while sequence:
+        final = None
+        #print sequence
+        i = list(sequence)[0]
+        cluster = set([i])
+        initial = values[i]
+        while initial != final:
+            initial = cluster_center(cluster, values)
+            #print 'initial:', initial
+            cluster = set(filter(lambda x: distance(initial, values[x]) < r, sequence))
+            final = cluster_center(cluster, values)
+            #print 'final:', final
+        #print cluster
+        sequence -= cluster
+        clusters.append(cluster)
+    #print clusters
+    return clusters
+
+def mocm(element, clusters, values):
+    measures = []
+    for cluster in clusters:
+        measure = distance(element, cluster_center(cluster, values), L)    
+        measures.append(measure)
+    summ = sum(measures)
+    if summ != 0:
+        measures = map(lambda x: 1 - (x / summ), measures)
+        summ = sum(measures)
+        measures = map(lambda x: x / summ, measures)
+    return measures
+
+def separator(figures, contours):
+    pass
+
 def normalize_colors(colors):
     # normalize
     summ = sum(colors.values())

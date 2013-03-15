@@ -54,9 +54,37 @@ def mocm(element, clusters, values):
     #print measures
     return measures
 
-def separator(cards, image, contours):
+def separator(cards, image, contours, graph):
+    figures = []
     for card in cards:
         print card
+        # create hist dictionary
+        card['hist'] = {}
+        # step no.1
+        outer_contour_id = int(card['id'])
+        ((h, l, s), subimage, mask) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
+        card['hist']['hue'] = h
+        card['hist']['lightness'] = l
+        card['hist']['saturation'] = s
+        #cv2.imshow(str(outer_contour_id), subimage)
+        figures_list = card['figures']
+        for figure_id in figures_list:
+            figure = {'id': figure_id, 'border': {}, 'inner': {}}
+            #step no.2
+            outer_contour_id = int(figure_id)
+            ((h, l, s), subimage, mask) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
+            #cv2.imshow(str(outer_contour_id), subimage)
+            figure['border']['hue'] = h
+            figure['border']['lightness'] = l
+            figure['border']['saturation'] = s
+            ((h, l, s), subimage, mask) = plot_inner_hist(image, outer_contour_id, contours)
+            #cv2.imshow(str(outer_contour_id), subimage)
+            #step no.3
+            #step no.4
+            figures.append(figure)
+        # clear hist dictionary
+        card['hist'] = {}
+    return figures
 
 def normalize_colors(colors):
     # normalize
@@ -82,6 +110,13 @@ def calculate_colors(metrics, figures, color_list):
     return colors
 
 def classifier(cards, figure_hues):
+    #step no.5
+    for card in cards:
+        figures = card['figures']  
+        for figure_id in figures:
+            pass
+    #step no.6
+    #cluster hist
     shading_list = ('solid', 'striped', 'open')
     figures = []
     figures_list = []
@@ -134,7 +169,7 @@ def classifier(cards, figure_hues):
     return cards
 
 def feature_detector(graph, image, cards, contours):
-    separator(cards, image, contours)
+    separator(cards, image, contours, graph)
     hues = []
     figure_hues = {}
     # collecting figures

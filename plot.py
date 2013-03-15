@@ -165,6 +165,28 @@ def plot_color_rectangle(image, mask):
     cv.FillConvexPoly(color_rectangle, *rectangle)
     return color_rectangle
 
+def plot_inner_hist(image, outer_contour_id, contours):
+    outer_contour = contours[outer_contour_id]
+    (x, y, width, height) = cv2.boundingRect(outer_contour)
+    subimage = get_subimage(image, (x, y), (x + width, y + height))
+    monochrome = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
+    mask = cv2.compare(monochrome, monochrome, cv2.CMP_EQ)
+    inverted_mask = mask.copy()
+    for i in range(width):
+        for j in range(height):
+            point = (x + i, y + j)
+            outer_contour_test = cv2.pointPolygonTest(outer_contour, point, 0)
+            if outer_contour_test > 0:
+                inverted_mask[j][i] = 0
+            else:
+                mask[j][i] = 0
+    cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
+    image_name = '%d'%(outer_contour_id)
+    #cv2.imshow(image_name, subimage) 
+    #subhists = plot_hist(subimage, mask, image_name)
+    subhists = plot_hist_hls(subimage, mask, image_name)
+    return subhists, subimage, mask
+
 def plot_intercontour_hist(image, outer_contour_id, contours, graph):
     outer_contour = contours[outer_contour_id]
     (x, y, width, height) = cv2.boundingRect(outer_contour)
@@ -220,8 +242,8 @@ def plot_figures_hist(contours, hierarchy, image):
         subimage, mask = intercontour_gap_processing(image, contours, graph, nodes_on_level, level)
     return subimage, mask
 
-def highlight_contours(image, contours, ids):
+def highlight_contours(image, contours, indexes):
     copy = image.copy()
     color = (0, 0, 255)
-    for i in ids: cv2.drawContours(copy, contours, i, color, 2)
+    for index in indexes: cv2.drawContours(copy, contours, index, color, 2)
     cv2.imshow('highlighted', copy)

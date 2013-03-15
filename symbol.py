@@ -119,7 +119,7 @@ def classifier(cards, contours, figure_moments):
         card['description']['symbol'] = card_symbol    
     return cards
 
-def feature_detector(cards, graph, contours):
+def feature_detector(cards, contours):
     figure_contours = []
     figure_moments = {}
     # collecting figures

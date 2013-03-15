@@ -50,8 +50,9 @@ def mocm(element, clusters, values):
         measures = map(lambda x: x / summ, measures)
     return measures
 
-def separator(figures, contours):
-    pass
+def separator(cards, figures, contours):
+    for card in cards:
+        print card
 
 def normalize_colors(colors):
     # normalize
@@ -128,7 +129,7 @@ def classifier(cards, figure_hues):
         card['description']['color'] = card_color    
     return cards
 
-def feature_detector(image, cards, graph, contours):
+def feature_detector(graph, image, cards, contours):
     hues = []
     figure_hues = {}
     # collecting figures

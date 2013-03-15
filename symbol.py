@@ -49,6 +49,7 @@ def mocm(element, clusters, values):
     if summ != 0:
         measures = map(lambda x: 1 - (x / summ), measures)
         summ = sum(measures)
+    if summ != 0:
         measures = map(lambda x: x / summ, measures)
     #print measures
     return measures

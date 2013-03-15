@@ -41,16 +41,20 @@ def forel(elements, values):
 def mocm(element, clusters, values):
     measures = []
     for cluster in clusters:
-        measure = distance(element, cluster_center(cluster, values), L)    
+        measure = distance(element, cluster_center(cluster, values))    
         measures.append(measure)
+    #print measures
     summ = sum(measures)
+    #print summ
     if summ != 0:
         measures = map(lambda x: 1 - (x / summ), measures)
         summ = sum(measures)
+    if summ != 0:
         measures = map(lambda x: x / summ, measures)
+    #print measures
     return measures
 
-def separator(cards, figures, contours):
+def separator(cards, image, contours):
     for card in cards:
         print card
 
@@ -130,6 +134,7 @@ def classifier(cards, figure_hues):
     return cards
 
 def feature_detector(graph, image, cards, contours):
+    separator(cards, image, contours)
     hues = []
     figure_hues = {}
     # collecting figures

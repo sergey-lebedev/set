@@ -55,9 +55,9 @@ def feature_detector(image, graph, contours):
         card['description']['shading'] = SHADING
     # second pass for color detection
     figure_moments = symbol.feature_detector(cards, contours)
+    cards = symbol.classifier(cards, contours, figure_moments)
     figure_hues = color.feature_detector(graph, image, cards, contours)
     cards = color.classifier(cards, figure_hues)
-    cards = symbol.classifier(cards, contours, figure_moments)
     print cards
     return cards
 

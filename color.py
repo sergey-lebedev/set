@@ -2,35 +2,83 @@ import cv2
 import number
 from plot import *
 
+def normalize_colors(colors):
+    # normalize
+    summ = sum(colors.values())
+    #print colors
+    #print summ
+    if summ != 0:
+        for color in colors: colors[color] /= summ
+    #print colors
+    return colors
+
+def calculate_colors(metrics, figures, color_list):
+    colors = {}
+    # cummulative sum
+    for color in color_list:
+        summ = 0
+        counter = 0
+        for i, figure in enumerate(figures):
+            if figure['colors'].has_key(color):
+                summ += metrics[i] * figure['colors'][color]
+                counter += 1
+        colors[color] = summ / counter 
+    return colors
+
 def distance(a, b, L):
     d = abs(a - b)
-    result = min(d, L - d)    
-    return result
+    if d < L - d:
+        marker = False
+        result = d
+    else:
+        marker = True
+        result = L - d
+    return result, marker
 
-def cluster_center(cluster, values):
+def cluster_center(cluster, hist):
     accumulator = 0
     for member in cluster:
-        accumulator += values[member]
-    center = accumulator / len(cluster)
+        #print member
+        #print hist[member % L]
+        accumulator += member*hist[member % L]
+        #print accumulator
+    #print accumulator
+    subhist = map(lambda x: hist[x % L], cluster)
+    #print sum(subhist)
+    center = accumulator / sum(subhist)
+    center %= L
     return center
 
-def forel(elements, values):
+def roi(sequence, center):
+    r = 30
+    raw_cluster = set([])
+    for element in sequence:
+        d, flag = distance(center, element, L)
+        if d < r:
+            if flag: element += L
+            raw_cluster |= set([element])      
+    return raw_cluster
+
+def forel(hist):
+    elements = range(len(hist))
     #print elements
-    #print values
-    sequence = set(elements)
-    r = 0.10
+    sequence = set(filter(lambda x: hist[x] != 0, elements))
+    #print sequence
     clusters = []
     while sequence:
-        final = None
+        final = float('infinity')
         #print sequence
         i = list(sequence)[0]
-        cluster = set([i])
-        initial = values[i]
+        initial = i
+        raw_cluster = set([i])
         while initial != final:
-            initial = cluster_center(cluster, values)
+            initial = cluster_center(raw_cluster, hist)
             #print 'initial:', initial
-            cluster = set(filter(lambda x: distance(initial, values[x]) < r, sequence))
-            final = cluster_center(cluster, values)
+            raw_cluster = roi(sequence, initial)
+            #print raw_cluster
+            final = cluster_center(raw_cluster, hist)
+            cluster = set(map(lambda x: x % L, raw_cluster))
+            #print cluster
             #print 'final:', final
         #print cluster
         sequence -= cluster
@@ -57,7 +105,7 @@ def mocm(element, clusters, values):
 def separator(cards, image, contours, graph):
     figures = []
     for card in cards:
-        print card
+        #print card
         # create hist dictionary
         card['hist'] = {}
         # step no.1
@@ -77,77 +125,77 @@ def separator(cards, image, contours, graph):
             figure['border']['hue'] = h
             figure['border']['lightness'] = l
             figure['border']['saturation'] = s
-            ((h, l, s), subimage, mask) = plot_inner_hist(image, outer_contour_id, contours)
-            #cv2.imshow(str(outer_contour_id), subimage)
+            ((h, l, s), subimage, mask, inverted_mask) = plot_inner_hist(image, outer_contour_id, contours)
+            image_name = str(outer_contour_id)
+            #cv2.imshow(image_name, subimage)
             #step no.3
+            converted_image = cv2.cvtColor(subimage, cv2.COLOR_BGR2HLS)
+            (hue, lightness, saturation) = cv2.split(converted_image)
+            (width, height) = cv.GetSize(cv.fromarray(subimage))
+            figure_mask = mask.copy()
+            #print (width, height)
+            for i in range(width):
+                for j in range(height):
+                    #print 'mask: ', mask[j][i]
+                    if mask[j][i] != 0:
+                        value = lightness[j][i]
+                        #print value
+                        #print 'card_lightness: ', card['hist']['lightness'][value]
+                        #print 'figure_lightness: ',figure['border']['lightness'][value]    
+                        if card['hist']['lightness'][value] > figure['border']['lightness'][value]:
+                            figure_mask[j][i] = 0
+                            inverted_mask[j][i] = 255
+            #cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
+            #cv2.imshow(image_name + '(full)', subimage)
             #step no.4
+            (h, l, s) = plot_hist_hls(subimage, figure_mask, image_name, normalized=False)
+            figure['inner']['hue'] = h
+            figure['inner']['lightness'] = l
+            figure['inner']['saturation'] = s            
             figures.append(figure)
         # clear hist dictionary
         card['hist'] = {}
     return figures
 
-def normalize_colors(colors):
-    # normalize
-    summ = sum(colors.values())
-    #print colors
-    #print summ
-    if summ != 0:
-        for color in colors: colors[color] /= summ
-    #print colors
-    return colors
-
-def calculate_colors(metrics, figures, color_list):
-    colors = {}
-    # cummulative sum
-    for color in color_list:
-        summ = 0
-        counter = 0
-        for i, figure in enumerate(figures):
-            if figure['colors'].has_key(color):
-                summ += metrics[i] * figure['colors'][color]
-                counter += 1
-        colors[color] = summ / counter 
-    return colors
-
-def classifier(cards, figure_hues):
+def classifier(cards, figures):
     #step no.5
-    for card in cards:
-        figures = card['figures']  
-        for figure_id in figures:
-            pass
-    #step no.6
     #cluster hist
-    shading_list = ('solid', 'striped', 'open')
-    figures = []
-    figures_list = []
-    for shading in shading_list:
-        for card in filter(lambda x: x['description']['shading'] == shading, cards):
-            figures_list.extend(card['figures'])
-    #print figures_list
-    # init colors
-    color_list = [0]
-    if figures_list:
-        figure_id = figures_list[0]
-        figure = {'id': figure_id, 'colors': {0: 1.0}}
-        figures.append(figure)
-    # comparing colors
-    for i, figure_i in enumerate(figures_list[1:]):
-        #print 'i: ', figure_i
-        figure = {'id': figure_i}
-        metrics = [] 
-        for figure_j in figures_list[:i + 1]:
-            #print 'j: ', figure_j      
-            metric = 1 - cv2.compareHist(figure_hues[figure_i], figure_hues[figure_j], 3)
-            #print metric
-            metrics.append(metric)
-        colors = calculate_colors(metrics, figures[:i + 1], color_list)
-        if max(metrics) < 0.20:
-            color = len(color_list)
-            color_list.append(color)
-            colors[color] = 1.0
-        colors = normalize_colors(colors)
-        figure['colors'] = colors      
-        figures.append(figure)
+    hists = map(lambda x: x['inner']['hue'], figures)
+    common_hist = reduce(lambda x, y: x + y, hists)
+    #print 'common_hist: ', common_hist
+    #for i, value in enumerate(common_hist): print i, value
+    clusters = forel(common_hist)
+    elements = range(len(common_hist))
+    #step no.6
+    color_list = range(len(clusters))
+    color_hists = []
+    for cluster in clusters:
+        hist = map(lambda x: common_hist[x] if x in cluster else 0, elements)
+        #print hist
+        hist = np.array(map(lambda x: np.array(x, dtype = np.float32, ndmin = 1), hist))
+        #print hist
+        params = (1, 0, cv2.NORM_L1)
+        cv2.normalize(hist, hist, *params)
+        #print hist
+        color_hists.append(hist)
+    for figure in figures:
+        hist =  figure['inner']['hue']
+        params = (1, 0, cv2.NORM_L1)
+        cv2.normalize(hist, hist, *params)
+        figure['inner']['hue'] = hist
+        colors = {}
+        for color in color_list:
+            #print hist
+            metric = 1 - cv2.compareHist(color_hists[color], hist, 3)
+            #print 'color: ', color
+            #print 'metric: ', metric
+            #metrics.append(metric)
+            colors[color] = metric
+        #print colors
+        #colors = calculate_colors(metrics, figures, color_list)
+        #colors = normalize_colors(colors)
+        #print colors
+        figure['colors'] = colors
     #print figures
     # card color detector
     for card in cards:
@@ -159,7 +207,7 @@ def classifier(cards, figure_hues):
             #print figure
             for color in color_list:
                 if figure['colors'].has_key(color):
-                   card_colors[color] += figure['colors'][color]     
+                   card_colors[color] += figure['colors'][color]
         card_colors = normalize_colors(card_colors)
         #print card_colors
         ccv = card_colors.values()
@@ -169,7 +217,7 @@ def classifier(cards, figure_hues):
     return cards
 
 def feature_detector(graph, image, cards, contours):
-    separator(cards, image, contours, graph)
+    figures = separator(cards, image, contours, graph)
     hues = []
     figure_hues = {}
     # collecting figures
@@ -191,4 +239,5 @@ def feature_detector(graph, image, cards, contours):
             similarity_matrix[(j, i)] = metric
     #print similarity_matrix
     #plot_heatmap(similarity_matrix, n)
-    return figure_hues
+    #return figure_hues
+    return figures

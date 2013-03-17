@@ -3,6 +3,7 @@ import cv2
 import math
 import numpy as np
 
+L = 181
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 screen_width = 1280
@@ -17,15 +18,17 @@ def get_subimage(image, first_anchor, second_anchor):
     subimage = cv2.getRectSubPix(image, (width, height), center)
     return subimage
 
-def plot_hist_hls(image, mask=None, image_name=''):
+def plot_hist_hls(image, mask=None, image_name='', normalized=True):
     converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
     (hue, lightness, saturation) = cv2.split(converted_image)
+    counts = (L, 256, 256)
     #cv2.imshow(image_name, lightness)
     subhists = []
     for i, slice in enumerate((hue, lightness, saturation)):
-        subhist = cv2.calcHist([slice], [0], mask, [256], [0, 255])
-        params = (1, 0, cv2.NORM_L1)
-        cv2.normalize(subhist, subhist, *params)
+        subhist = cv2.calcHist([slice], [0], mask, [counts[i]], [0, counts[i] - 1])
+        if normalized:
+            params = (1, 0, cv2.NORM_L1)
+            cv2.normalize(subhist, subhist, *params)
         subhists.append(subhist)
     return subhists
 
@@ -185,7 +188,7 @@ def plot_inner_hist(image, outer_contour_id, contours):
     #cv2.imshow(image_name, subimage) 
     #subhists = plot_hist(subimage, mask, image_name)
     subhists = plot_hist_hls(subimage, mask, image_name)
-    return subhists, subimage, mask
+    return subhists, subimage, mask, inverted_mask
 
 def plot_intercontour_hist(image, outer_contour_id, contours, graph):
     outer_contour = contours[outer_contour_id]

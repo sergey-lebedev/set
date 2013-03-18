@@ -12,19 +12,6 @@ def normalize_colors(colors):
     #print colors
     return colors
 
-def calculate_colors(metrics, figures, color_list):
-    colors = {}
-    # cummulative sum
-    for color in color_list:
-        summ = 0
-        counter = 0
-        for i, figure in enumerate(figures):
-            if figure['colors'].has_key(color):
-                summ += metrics[i] * figure['colors'][color]
-                counter += 1
-        colors[color] = summ / counter 
-    return colors
-
 def distance(a, b, L):
     d = abs(a - b)
     if d < L - d:
@@ -192,7 +179,6 @@ def classifier(cards, figures):
             #metrics.append(metric)
             colors[color] = metric
         #print colors
-        #colors = calculate_colors(metrics, figures, color_list)
         #colors = normalize_colors(colors)
         #print colors
         figure['colors'] = colors

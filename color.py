@@ -50,7 +50,7 @@ def cluster_center(cluster, hist):
     return center
 
 def roi(sequence, center):
-    r = 30
+    r = 12
     raw_cluster = set([])
     for element in sequence:
         d, flag = distance(center, element, L)
@@ -102,7 +102,7 @@ def mocm(element, clusters, values):
     #print measures
     return measures
 
-def separator(cards, image, contours, graph):
+def feature_detector(cards, image, contours, graph):
     figures = []
     for card in cards:
         #print card
@@ -213,31 +213,6 @@ def classifier(cards, figures):
         ccv = card_colors.values()
         card_color = card_colors.keys()[ccv.index(max(ccv))]
         #print card_color
-        card['description']['color'] = card_color    
+        card['description']['color'] = card_color
+        card['description']['veracity'] *= max(ccv) 
     return cards
-
-def feature_detector(graph, image, cards, contours):
-    figures = separator(cards, image, contours, graph)
-    hues = []
-    figure_hues = {}
-    # collecting figures
-    for card in cards:
-        #print 'card: ', card
-        for figure_id in card['figures']:
-            #print 'figure: ', figure
-            figure_outer_contour_id = int(figure_id)
-            ((hue, l, s), subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
-            hues.append(hue)
-            figure_hues[figure_id] = hue
-    n = len(hues)
-    similarity_matrix = {}
-    for i in range(len(hues)):
-        for j in range(len(hues[:i + 1])):
-            metric = 1 - cv2.compareHist(hues[i], hues[j], 2)
-            #print metric
-            similarity_matrix[(i, j)] = metric
-            similarity_matrix[(j, i)] = metric
-    #print similarity_matrix
-    #plot_heatmap(similarity_matrix, n)
-    #return figure_hues
-    return figures

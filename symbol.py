@@ -100,7 +100,7 @@ def classifier(cards, contours, figure_moments):
             symbols[symbol] = measures[symbol]
         figure['symbols'] = symbols   
         figures.append(figure)
-    print figures
+    #print figures
     # card symbol detector
     for card in cards:
         figure_list = card['figures']
@@ -117,7 +117,8 @@ def classifier(cards, contours, figure_moments):
         csv = card_symbols.values()
         card_symbol = card_symbols.keys()[csv.index(max(csv))]
         #print card_symbol
-        card['description']['symbol'] = card_symbol    
+        card['description']['symbol'] = card_symbol
+        card['description']['veracity'] *= max(csv)  
     return cards
 
 def feature_detector(cards, contours):

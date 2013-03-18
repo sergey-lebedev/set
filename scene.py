@@ -51,14 +51,15 @@ def feature_detector(image, graph, contours):
         SHADING = shading.feature_detector(graph, card['id'], image, contours)
         COLOR = None
         card['description'] = {}
+        card['description']['veracity'] = 1
         card['description']['number'] = NUMBER
         card['description']['shading'] = SHADING
     # second pass for color detection
     figure_moments = symbol.feature_detector(cards, contours)
     cards = symbol.classifier(cards, contours, figure_moments)
-    figures = color.feature_detector(graph, image, cards, contours)
+    figures = color.feature_detector(cards, image, contours, graph)
     cards = color.classifier(cards, figures)
-    print cards
+    #print cards
     return cards
 
 def get_hierarchy_tree(hierarchy):
@@ -76,6 +77,12 @@ def get_hierarchy_tree(hierarchy):
             graph.add_edge([str(v_prev), index])
     return graph
 
+def cards_veracity(cards, ids):
+    veracity = 1
+    for card_id in ids:
+        veracity *= cards[card_id]['description']['veracity']
+    return veracity    
+
 def analysis(image):
     cards = []
     figures = []
@@ -86,9 +93,18 @@ def analysis(image):
     cards = feature_detector(image, graph, contours)
     playing_cards = [card['description'] for card in cards]
     sets, card_ids = set.search_set(playing_cards)
-    print sets
+    #print sets
+    #print card_ids
+    pairs = zip(sets, card_ids)
+    info = []
+    for s, ids in pairs:
+        veracity = cards_veracity(cards, ids)
+        info.append((veracity, ids, s))
     if card_ids:
-        contour_ids = map(lambda x: int(cards[x]['id']), card_ids[0])
+        info = sorted(info, reverse=True)
+        #print info
+        print info[0][2]
+        contour_ids = map(lambda x: int(cards[x]['id']), info[0][1])
         highlight_contours(image, contours, contour_ids)
     else:
         print 'None'

@@ -9,18 +9,14 @@ def normalize_colors(colors):
     #print summ
     if summ != 0:
         for color in colors: colors[color] /= summ
+    else:
+        for color in colors: colors[color] = 1.0 / len(colors)
     #print colors
     return colors
 
-def distance(a, b, L):
-    d = abs(a - b)
-    if d < L - d:
-        marker = False
-        result = d
-    else:
-        marker = True
-        result = L - d
-    return result, marker
+def distance(a, b):
+    result = abs(a - b)
+    return result
 
 def cluster_center(cluster, hist):
     accumulator = 0
@@ -31,19 +27,25 @@ def cluster_center(cluster, hist):
         #print accumulator
     #print accumulator
     subhist = map(lambda x: hist[x % L], cluster)
+    #print subhist
     #print sum(subhist)
     center = accumulator / sum(subhist)
     center %= L
     return center
 
-def roi(sequence, center):
-    r = 12
-    raw_cluster = set([])
-    for element in sequence:
-        d, flag = distance(center, element, L)
-        if d < r:
-            if flag: element += L
-            raw_cluster |= set([element])      
+def roi(sequence, c):
+    r = 8
+    #print 'c: ', c
+    band = set([])
+    band |= sequence
+    for right_cnt in range(1, (c + r) // L + 1):
+        subsequence = set(map(lambda x: x + right_cnt * L, sequence))
+        band |= subsequence
+    for left_cnt in range(-1, (c - r) // L - 1, -1):
+        subsequence = set(map(lambda x: x + left_cnt * L, sequence))
+        band |= subsequence
+    #print band
+    raw_cluster = set(filter(lambda x: distance(x, c) < r, band))
     return raw_cluster
 
 def forel(hist):
@@ -55,14 +57,17 @@ def forel(hist):
     while sequence:
         final = float('infinity')
         #print sequence
-        i = list(sequence)[0]
+        hist_list = map(lambda x: int(hist[x]), sequence)
+        maxs = filter(lambda x: hist[x] == max(hist_list), sequence)
+        i = maxs[0]
         initial = i
         raw_cluster = set([i])
         while initial != final:
+            #print 'raw: ', raw_cluster
             initial = cluster_center(raw_cluster, hist)
             #print 'initial:', initial
             raw_cluster = roi(sequence, initial)
-            #print raw_cluster
+            #print 'raw: ', raw_cluster
             final = cluster_center(raw_cluster, hist)
             cluster = set(map(lambda x: x % L, raw_cluster))
             #print cluster
@@ -156,7 +161,23 @@ def classifier(cards, figures):
     #step no.6
     color_list = range(len(clusters))
     color_hists = []
+    '''
+    c = 0
+    height = 300
+    subhist = common_hist[:]
+    l1_norm_min = cv.Norm(cv.fromarray(subhist), None, cv2.NORM_L1)
+    params = (300, 0, cv2.NORM_L1)
+    cv2.normalize(common_hist, subhist, *params)
+    subhist = np.int32(np.around(subhist))
+    # density of probability calculation
+    bins = np.arange(L) #.reshape(256,1)
+    pts = np.column_stack((bins, height - subhist))
+    hist_image = np.zeros((height, L, 1))
+    cv2.polylines(hist_image, [pts], False, (255, 255, 255))
+    cv2.imshow('%d hist: '%c, hist_image)   
+    ''' 
     for cluster in clusters:
+        #c += 1
         hist = map(lambda x: common_hist[x] if x in cluster else 0, elements)
         #print hist
         hist = np.array(map(lambda x: np.array(x, dtype = np.float32, ndmin = 1), hist))
@@ -165,6 +186,20 @@ def classifier(cards, figures):
         cv2.normalize(hist, hist, *params)
         #print hist
         color_hists.append(hist)
+        '''
+        height = 300
+        subhist = hist[:]
+        l1_norm_min = cv.Norm(cv.fromarray(subhist), None, cv2.NORM_L1)
+        params = (300, 0, cv2.NORM_L1)
+        cv2.normalize(hist, subhist, *params)
+        subhist = np.int32(np.around(subhist))
+        # density of probability calculation
+        bins = np.arange(L) #.reshape(256,1)
+        pts = np.column_stack((bins, height - subhist))
+        hist_image = np.zeros((height, L, 1))
+        cv2.polylines(hist_image, [pts], False, (255, 255, 255))
+        cv2.imshow('%d hist: '%c, hist_image)
+        '''   
     for figure in figures:
         hist =  figure['inner']['hue']
         params = (1, 0, cv2.NORM_L1)
@@ -200,5 +235,6 @@ def classifier(cards, figures):
         card_color = card_colors.keys()[ccv.index(max(ccv))]
         #print card_color
         card['description']['color'] = card_color
-        card['description']['veracity'] *= max(ccv) 
+        card['description']['veracity'] *= max(ccv)
+        #print card['description']['veracity']
     return cards

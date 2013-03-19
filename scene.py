@@ -108,5 +108,5 @@ def analysis(image):
         highlight_contours(image, contours, contour_ids)
     else:
         print 'None'
-    #print cards
+    print cards
     #print figures

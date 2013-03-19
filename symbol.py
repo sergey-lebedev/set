@@ -61,6 +61,8 @@ def normalize_symbols(symbols):
     #print summ
     if summ != 0:
         for symbol in symbols: symbols[symbol] /= summ
+    else:
+        for symbol in symbols: symbols[symbol] = 1.0 / len(symbols)
     #print symbols
     return symbols
 
@@ -118,7 +120,8 @@ def classifier(cards, contours, figure_moments):
         card_symbol = card_symbols.keys()[csv.index(max(csv))]
         #print card_symbol
         card['description']['symbol'] = card_symbol
-        card['description']['veracity'] *= max(csv)  
+        card['description']['veracity'] *= max(csv)
+        #print card['description']['veracity']
     return cards
 
 def feature_detector(cards, contours):
@@ -136,11 +139,14 @@ def feature_detector(cards, contours):
             #moments = cv2.HuMoments(moments)
             #figure_moments[figure_id] = moments
             square = cv2.contourArea(contour)
-            rect = cv2.minAreaRect(contour)
-            box = cv.BoxPoints(rect)
-            box = np.array([[np.int0(point)] for point in box])
-            min_rect_square = cv2.contourArea(box)
-            figure_moments[figure_id] = (min_rect_square - square) / square
+            if square != 0:
+                rect = cv2.minAreaRect(contour)
+                box = cv.BoxPoints(rect)
+                box = np.array([[np.int0(point)] for point in box])
+                min_rect_square = cv2.contourArea(box)
+                figure_moments[figure_id] = (min_rect_square - square) / square
+            else:
+                figure_moments[figure_id] = 0
     n = len(figure_contours)
     # adjacency matrix
     similarity_matrix = {}

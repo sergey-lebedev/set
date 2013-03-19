@@ -13,7 +13,7 @@ images_dir = './samples'
 ##filename = 'Webcam-1355052975.png'
 ##filename = 'Webcam-1356180892.png'
 #filename = 'Webcam-1356203219.png'
-#filename = 'DSC03464_mini.JPG'
+#filename = 'DSC03466_mini.JPG'
 filename = 'DSC03466_mini.JPG'
 image = cv2.imread('/'.join((images_dir, filename)))
 cv2.moveWindow('experiment', 100, 100)

@@ -34,7 +34,7 @@ def cluster_center(cluster, hist):
     return center
 
 def roi(sequence, c):
-    r = 8
+    r = 25
     #print 'c: ', c
     band = set([])
     band |= sequence
@@ -177,7 +177,6 @@ def classifier(cards, figures):
     cv2.imshow('%d hist: '%c, hist_image)   
     ''' 
     for cluster in clusters:
-        #c += 1
         hist = map(lambda x: common_hist[x] if x in cluster else 0, elements)
         #print hist
         hist = np.array(map(lambda x: np.array(x, dtype = np.float32, ndmin = 1), hist))
@@ -187,6 +186,7 @@ def classifier(cards, figures):
         #print hist
         color_hists.append(hist)
         '''
+        c += 1        
         height = 300
         subhist = hist[:]
         l1_norm_min = cv.Norm(cv.fromarray(subhist), None, cv2.NORM_L1)

@@ -92,6 +92,7 @@ def classifier(cards, contours, figure_moments):
     #print figures_list
     # clustering
     clusters = forel(figures_list, figure_moments)
+    #print clusters
     # init symbols
     symbol_list = range(len(clusters))
     for figure_id in figures_list:

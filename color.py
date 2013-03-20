@@ -34,7 +34,7 @@ def cluster_center(cluster, hist):
     return center
 
 def roi(sequence, c):
-    r = 25
+    r = 15
     #print 'c: ', c
     band = set([])
     band |= sequence
@@ -51,14 +51,14 @@ def roi(sequence, c):
 def forel(hist):
     elements = range(len(hist))
     #print elements
-    sequence = set(filter(lambda x: hist[x] != 0, elements))
+    sequence = set(filter(lambda x: int(hist[x]) != 0, elements))
     #print sequence
     clusters = []
     while sequence:
         final = float('infinity')
         #print sequence
         hist_list = map(lambda x: int(hist[x]), sequence)
-        maxs = filter(lambda x: hist[x] == max(hist_list), sequence)
+        maxs = filter(lambda x: int(hist[x]) == max(hist_list), sequence)
         i = maxs[0]
         initial = i
         raw_cluster = set([i])
@@ -161,49 +161,24 @@ def classifier(cards, figures):
     #step no.6
     color_list = range(len(clusters))
     color_hists = []
-    '''
-    c = 0
-    height = 300
-    subhist = common_hist[:]
-    l1_norm_min = cv.Norm(cv.fromarray(subhist), None, cv2.NORM_L1)
-    params = (300, 0, cv2.NORM_L1)
-    cv2.normalize(common_hist, subhist, *params)
-    subhist = np.int32(np.around(subhist))
-    # density of probability calculation
-    bins = np.arange(L) #.reshape(256,1)
-    pts = np.column_stack((bins, height - subhist))
-    hist_image = np.zeros((height, L, 1))
-    cv2.polylines(hist_image, [pts], False, (255, 255, 255))
-    cv2.imshow('%d hist: '%c, hist_image)   
-    ''' 
+    #c = 0
+    #plot_selected_hist(common_hist, str(c))
     for cluster in clusters:
         hist = map(lambda x: common_hist[x] if x in cluster else 0, elements)
         #print hist
         hist = np.array(map(lambda x: np.array(x, dtype = np.float32, ndmin = 1), hist))
         #print hist
-        params = (1, 0, cv2.NORM_L1)
+        params = (1, 0, cv2.NORM_INF)
         cv2.normalize(hist, hist, *params)
         #print hist
         color_hists.append(hist)
-        '''
-        c += 1        
-        height = 300
-        subhist = hist[:]
-        l1_norm_min = cv.Norm(cv.fromarray(subhist), None, cv2.NORM_L1)
-        params = (300, 0, cv2.NORM_L1)
-        cv2.normalize(hist, subhist, *params)
-        subhist = np.int32(np.around(subhist))
-        # density of probability calculation
-        bins = np.arange(L) #.reshape(256,1)
-        pts = np.column_stack((bins, height - subhist))
-        hist_image = np.zeros((height, L, 1))
-        cv2.polylines(hist_image, [pts], False, (255, 255, 255))
-        cv2.imshow('%d hist: '%c, hist_image)
-        '''   
+        #c += 1        
+        #plot_selected_hist(hist, str(c))
     for figure in figures:
-        hist =  figure['inner']['hue']
-        params = (1, 0, cv2.NORM_L1)
+        hist = figure['inner']['hue']
+        params = (1, 0, cv2.NORM_INF)
         cv2.normalize(hist, hist, *params)
+        #plot_selected_hist(hist, 'fig: ' + figure['id'])
         figure['inner']['hue'] = hist
         colors = {}
         for color in color_list:

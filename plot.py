@@ -18,6 +18,19 @@ def get_subimage(image, first_anchor, second_anchor):
     subimage = cv2.getRectSubPix(image, (width, height), center)
     return subimage
 
+def plot_selected_hist(hist, image_name=''):
+    height = 300
+    l1_norm_min = cv.Norm(cv.fromarray(hist), None, cv2.NORM_L1)
+    params = (300, 0, cv2.NORM_INF)
+    cv2.normalize(hist, hist, *params)
+    hist = np.int32(np.around(hist))
+    # density of probability calculation
+    bins = np.arange(L) #.reshape(256,1)
+    pts = np.column_stack((bins, height - hist))
+    hist_image = np.zeros((height, L, 1))
+    cv2.polylines(hist_image, [pts], False, (255, 255, 255))
+    cv2.imshow('%s'%image_name, hist_image)       
+
 def plot_hist_hls(image, mask=None, image_name='', normalized=True):
     converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
     (hue, lightness, saturation) = cv2.split(converted_image)
@@ -30,6 +43,7 @@ def plot_hist_hls(image, mask=None, image_name='', normalized=True):
             params = (1, 0, cv2.NORM_L1)
             cv2.normalize(subhist, subhist, *params)
         subhists.append(subhist)
+    #plot_selected_hist(subhists[0], image_name)    
     return subhists
 
 def plot_hist(image, mask=None, image_name=''):

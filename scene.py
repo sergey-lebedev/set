@@ -32,7 +32,7 @@ def adaptive_threshold(image):
     #result = cv2.inpaint(result, [], 10, cv2.INPAINT_NS)
     adaptive_method = cv2.ADAPTIVE_THRESH_MEAN_C
     threshold_type = cv2.THRESH_BINARY_INV
-    block_size = 7
+    block_size = 9
     c = 4
     result = cv2.adaptiveThreshold(result, 255, adaptive_method, threshold_type, block_size, c)
     cv2.imshow('threshold', result)

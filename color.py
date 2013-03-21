@@ -14,11 +14,19 @@ def normalize_colors(colors):
     #print colors
     return colors
 
-def distance(a, b):
+def distance_old(a, b):
     result = abs(a - b)
     return result
 
-def cluster_center(cluster, hist):
+def distance(hist_a, hist_b):
+    params = (1, 0, cv2.NORM_L1)
+    cv2.normalize(hist_a, hist_a, *params)
+    cv2.normalize(hist_b, hist_b, *params)
+    result = cv2.compareHist(hist_a, hist_b, 3)
+    #print result
+    return result
+
+def cluster_center_old(cluster, hist):
     accumulator = 0
     for member in cluster:
         #print member
@@ -33,7 +41,12 @@ def cluster_center(cluster, hist):
     center %= L
     return center
 
-def roi(sequence, c):
+def cluster_center(cluster, hists):
+    subhists = map(lambda x: hists[x], cluster)
+    center = reduce(lambda x, y: x + y, subhists)
+    return center
+
+def roi_old(sequence, c):
     r = 15
     #print 'c: ', c
     band = set([])
@@ -48,7 +61,7 @@ def roi(sequence, c):
     raw_cluster = set(filter(lambda x: distance(x, c) < r, band))
     return raw_cluster
 
-def forel(hist):
+def forel_old(hist):
     elements = range(len(hist))
     #print elements
     sequence = set(filter(lambda x: int(hist[x]) != 0, elements))
@@ -74,7 +87,34 @@ def forel(hist):
             #print 'final:', final
         #print cluster
         sequence -= cluster
-        clusters.append(cluster)
+        clusters.append((cluster, hist))
+    #print clusters
+    return clusters
+
+def forel(figures):
+    r = 0.95
+    sequence = set(range(len(figures)))
+    #print elements
+    hists = map(lambda x: x['inner']['hue'], figures)
+    #print sequence
+    clusters = []
+    while sequence:
+        #print 'seq: ', sequence
+        sequence_list = list(sequence)
+        initial = hists[sequence_list[0]]
+        final = hists[sequence_list[-1]]
+        cluster = set([sequence_list[0]])
+        while distance(initial, final) > 1e-7:
+            #print 'cluster: ', cluster
+            initial = cluster_center(cluster, hists)
+            #print 'initial:', initial
+            cluster = set(filter(lambda x: distance(hists[x], initial) < r, sequence))
+            final = cluster_center(cluster, hists)
+            #print cluster
+            #print 'final:', final
+        #print cluster
+        sequence -= cluster
+        clusters.append((cluster, final))
     #print clusters
     return clusters
 
@@ -152,21 +192,22 @@ def feature_detector(cards, image, contours, graph):
 def classifier(cards, figures):
     #step no.5
     #cluster hist
-    hists = map(lambda x: x['inner']['hue'], figures)
-    common_hist = reduce(lambda x, y: x + y, hists)
+    #hists = map(lambda x: x['inner']['hue'], figures)
+    #common_hist = reduce(lambda x, y: x + y, hists)
     #print 'common_hist: ', common_hist
     #for i, value in enumerate(common_hist): print i, value
-    clusters = forel(common_hist)
-    elements = range(len(common_hist))
+    #clusters = forel(common_hist)
+    clusters = forel(figures)
+    #elements = range(len(common_hist))
     #step no.6
     color_list = range(len(clusters))
     color_hists = []
     #c = 0
     #plot_selected_hist(common_hist, str(c))
-    for cluster in clusters:
-        hist = map(lambda x: common_hist[x] if x in cluster else 0, elements)
-        #print hist
-        hist = np.array(map(lambda x: np.array(x, dtype = np.float32, ndmin = 1), hist))
+    for cluster, hist in clusters:
+        #hist = map(lambda x: common_hist[x] if x in cluster else 0, elements)
+        print cluster
+        #hist = np.array(map(lambda x: np.array(x, dtype = np.float32, ndmin = 1), hist))
         #print hist
         params = (1, 0, cv2.NORM_INF)
         cv2.normalize(hist, hist, *params)
@@ -183,7 +224,7 @@ def classifier(cards, figures):
         colors = {}
         for color in color_list:
             #print hist
-            metric = 1 - cv2.compareHist(color_hists[color], hist, 3)
+            metric = 1 - distance(color_hists[color], hist)
             #print 'color: ', color
             #print 'metric: ', metric
             #metrics.append(metric)

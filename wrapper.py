@@ -43,7 +43,7 @@ def mouse_callback(event, x, y, flags, image):
             second_anchor = (x, y)
         if first_anchor and second_anchor:
             subimage = get_subimage(image, *box)
-            cv2.imshow('subimage', subimage)
+            #cv2.imshow('subimage', subimage)
             #plot_hist(subimage)
             scene.analysis(subimage)
             first_anchor = None

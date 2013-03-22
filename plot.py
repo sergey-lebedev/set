@@ -12,9 +12,9 @@ screen_height = 700
 def get_subimage(image, first_anchor, second_anchor):
     (fax, fay) = first_anchor
     (sax, say) = second_anchor
-    width = abs(fax - sax)
-    height = abs(fay - say)
-    center = ((fax + sax) / 2, (fay + say) / 2)
+    width = abs(fax - sax) + 1
+    height = abs(fay - say) + 1
+    center = ((fax + sax) / 2.0, (fay + say) / 2.0)
     subimage = cv2.getRectSubPix(image, (width, height), center)
     return subimage
 

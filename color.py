@@ -220,7 +220,6 @@ def classifier(cards, figures):
         params = (1, 0, cv2.NORM_INF)
         cv2.normalize(hist, hist, *params)
         #plot_selected_hist(hist, 'fig: ' + figure['id'])
-        figure['inner']['hue'] = hist
         colors = {}
         for color in color_list:
             #print hist

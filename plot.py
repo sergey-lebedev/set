@@ -35,7 +35,10 @@ def plot_hist_hls(image, mask=None, image_name='', normalized=True):
     converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
     (hue, lightness, saturation) = cv2.split(converted_image)
     counts = (L, 256, 256)
-    #cv2.imshow(image_name, lightness)
+    #components = {'h': hue, 's': saturation, 'l': lightness}
+    components = {}
+    for name in components:
+        cv2.imshow(image_name + ' ' + name, components[name])
     subhists = []
     for i, slice in enumerate((hue, lightness, saturation)):
         subhist = cv2.calcHist([slice], [0], mask, [counts[i]], [0, counts[i] - 1])
@@ -83,15 +86,16 @@ def plot_hist(image, mask=None, image_name=''):
     #cv.ShowImage('%s color triangle: '%image_name, color_rectangle)
     return subhists
 
-def plot_hierarchy_tree(graph):
-    filename = 'graph.png'
-    graph.draw(path=filename, format='png', prog='dot')
+def plot_hierarchy_tree(graph, image_name='graph'):
+    format = 'png'
+    filename = '.'.join([image_name, format])
+    graph.draw(path=filename, format=format, prog='dot')
     graph_image = cv2.imread(filename)
     (width, height) = cv.GetSize(cv.fromarray(graph_image))
     scale_factor = min(screen_width/float(width), screen_height/float(height))
     scale_factor = min(1, scale_factor)
     resized_graph = cv2.resize(graph_image, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LANCZOS4)
-    cv2.imshow('graph', resized_graph)
+    cv2.imshow(image_name, resized_graph)
 
 def plot_heatmap(similarity_matrix, n):
     if n != 0: 

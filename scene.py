@@ -4,7 +4,6 @@ import set
 import time
 import math
 import color
-import number
 import symbol
 import shading
 from plot import *
@@ -26,14 +25,14 @@ def card_processing(image, figure_outer_contour_id, contours, graph):
 
 def adaptive_threshold(image):
     result = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    result = cv2.medianBlur(result, 5)
+    result = cv2.medianBlur(result, 3)
     #result = cv2.equalizeHist(result)
     cv2.imshow('blured', result)
     #result = cv2.inpaint(result, [], 10, cv2.INPAINT_NS)
     adaptive_method = cv2.ADAPTIVE_THRESH_MEAN_C
     threshold_type = cv2.THRESH_BINARY_INV
     block_size = 9
-    c = 4
+    c = 2
     result = cv2.adaptiveThreshold(result, 255, adaptive_method, threshold_type, block_size, c)
     cv2.imshow('threshold', result)
     return result
@@ -43,11 +42,10 @@ def find_all_contours(image):
     contours, hierarchy = cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     return contours, hierarchy
 
-def feature_detector(image, graph, contours):
-    cards = find_cards(graph)
+def feature_detector(image, graph, cards, contours):
     recognized_cards = []
     for card in cards:
-        (sequence, NUMBER) = number.feature_detector(graph, card['id'])
+        NUMBER = len(card['figures'])
         SHADING = shading.feature_detector(graph, card['id'], image, contours)
         COLOR = None
         card['description'] = {}
@@ -77,6 +75,38 @@ def get_hierarchy_tree(hierarchy):
             graph.add_edge([str(v_prev), index])
     return graph
 
+def refining(graph, cards):
+    #print cards
+    cleaning_figures_list = []
+    refined_graph = AGraph(directed=True)
+    root = 'root'
+    refined_graph.add_node(root)
+    for card in cards:
+        card_inner_contour_id = card['id']
+        card_outer_contour_id = graph.predecessors(card_inner_contour_id)[0]
+        #print card_outer_contour_id
+        refined_graph.add_edge([root, card_outer_contour_id])
+        #print card_inner_contour_id
+        refined_graph.add_edge([card_outer_contour_id, card_inner_contour_id])
+        for figure_outer_contour_id in card['figures']:
+            #print figure_outer_contour_id
+            figure_inner_contour_id = graph.successors(figure_outer_contour_id)
+            #print figure_inner_contour_id
+            if figure_inner_contour_id:
+                figure_inner_contour_id = figure_inner_contour_id[0]
+                refined_graph.add_edge([card_inner_contour_id, figure_outer_contour_id])
+                refined_graph.add_edge([figure_outer_contour_id, figure_inner_contour_id])
+            else:
+                cleaning_figures_list.append(figure_outer_contour_id)
+        while cleaning_figures_list:
+            figure_outer_contour_id = cleaning_figures_list.pop(0)
+            card_id = cards.index(card)
+            #print cards[card_id]['figures']
+            cards[card_id]['figures'].remove(figure_outer_contour_id)
+            #print cards[card_id]['figures']
+            #print 'figure cleaned'
+    return refined_graph
+
 def cards_veracity(cards, ids):
     veracity = 1
     for card_id in ids:
@@ -88,9 +118,12 @@ def analysis(image):
     figures = []
     (contours, hierarchy) = find_all_contours(image)
     graph = get_hierarchy_tree(hierarchy)
-    plot_hierarchy_tree(graph)
+    #plot_hierarchy_tree(graph, 'raw')
+    cards = find_cards(graph)
+    graph = refining(graph, cards)
+    plot_hierarchy_tree(graph, 'refined')
     draw_all_contours(image, contours)
-    cards = feature_detector(image, graph, contours)
+    cards = feature_detector(image, graph, cards, contours)
     playing_cards = [card['description'] for card in cards]
     sets, card_ids = set.search_set(playing_cards)
     #print sets

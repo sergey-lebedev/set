@@ -147,6 +147,7 @@ def feature_detector(cards, image, contours, graph):
         card['hist']['lightness'] = l
         card['hist']['saturation'] = s
         #cv2.imshow(str(outer_contour_id), subimage)
+        #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'o')
         figures_list = card['figures']
         for figure_id in figures_list:
             figure = {'id': figure_id, 'border': {}, 'inner': {}}
@@ -160,6 +161,7 @@ def feature_detector(cards, image, contours, graph):
             ((h, l, s), subimage, mask, inverted_mask) = plot_inner_hist(image, outer_contour_id, contours)
             image_name = str(outer_contour_id)
             #cv2.imshow(image_name, subimage)
+            #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'b')
             #step no.3
             converted_image = cv2.cvtColor(subimage, cv2.COLOR_BGR2HLS)
             (hue, lightness, saturation) = cv2.split(converted_image)
@@ -177,8 +179,11 @@ def feature_detector(cards, image, contours, graph):
                         if card['hist']['lightness'][value] > figure['border']['lightness'][value]:
                             figure_mask[j][i] = 0
                             inverted_mask[j][i] = 255
-            #cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
+            #cv2.imshow(image_name + '(u)', subimage)
+            #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'u')
+            cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
             #cv2.imshow(image_name + '(full)', subimage)
+            #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'p')
             #step no.4
             (h, l, s) = plot_hist_hls(subimage, figure_mask, image_name, normalized=False)
             figure['inner']['hue'] = h

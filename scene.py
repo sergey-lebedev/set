@@ -75,7 +75,7 @@ def get_hierarchy_tree(hierarchy):
             graph.add_edge([str(v_prev), index])
     return graph
 
-def refining(graph, cards):
+def refining(graph, cards, contours):
     #print cards
     cleaning_figures_list = []
     refined_graph = AGraph(directed=True)
@@ -90,10 +90,12 @@ def refining(graph, cards):
         refined_graph.add_edge([card_outer_contour_id, card_inner_contour_id])
         for figure_outer_contour_id in card['figures']:
             #print figure_outer_contour_id
-            figure_inner_contour_id = graph.successors(figure_outer_contour_id)
+            pretenders = graph.successors(figure_outer_contour_id)
             #print figure_inner_contour_id
-            if figure_inner_contour_id:
-                figure_inner_contour_id = figure_inner_contour_id[0]
+            if pretenders:
+                link = map(lambda x: (cv2.contourArea(contours[x]), x), pretenders)
+                print link
+                (dummy, figure_inner_contour_id) = link.sort(reverse = True)[0]
                 refined_graph.add_edge([card_inner_contour_id, figure_outer_contour_id])
                 refined_graph.add_edge([figure_outer_contour_id, figure_inner_contour_id])
             else:

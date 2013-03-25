@@ -46,7 +46,7 @@ def feature_detector(image, graph, cards, contours):
     recognized_cards = []
     for card in cards:
         NUMBER = len(card['figures'])
-        SHADING = shading.feature_detector(graph, card['id'], image, contours)
+        SHADING = shading.feature_detector(graph, card, image, contours)
         COLOR = None
         card['description'] = {}
         card['description']['veracity'] = 1

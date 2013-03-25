@@ -93,9 +93,9 @@ def refining(graph, cards, contours):
             pretenders = graph.successors(figure_outer_contour_id)
             #print figure_inner_contour_id
             if pretenders:
-                link = map(lambda x: (cv2.contourArea(contours[x]), x), pretenders)
-                print link
-                (dummy, figure_inner_contour_id) = link.sort(reverse = True)[0]
+                link = map(lambda x: (cv2.contourArea(contours[int(x)]), x), pretenders)
+                link.sort(reverse = True)
+                figure_inner_contour_id = link[0][1]
                 refined_graph.add_edge([card_inner_contour_id, figure_outer_contour_id])
                 refined_graph.add_edge([figure_outer_contour_id, figure_inner_contour_id])
             else:
@@ -122,7 +122,7 @@ def analysis(image):
     graph = get_hierarchy_tree(hierarchy)
     #plot_hierarchy_tree(graph, 'raw')
     cards = find_cards(graph)
-    graph = refining(graph, cards)
+    graph = refining(graph, cards, contours)
     plot_hierarchy_tree(graph, 'refined')
     draw_all_contours(image, contours)
     cards = feature_detector(image, graph, cards, contours)

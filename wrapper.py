@@ -2,7 +2,7 @@ import cv2
 import scene
 from plot import *
 
-debug = not False
+debug = False
 
 images_dir = './samples'
 ##filename = 'Webcam-1355581255.png'
@@ -13,8 +13,8 @@ images_dir = './samples'
 ##filename = 'Webcam-1355052975.png'
 ##filename = 'Webcam-1356180892.png'
 #filename = 'Webcam-1356203219.png'
-filename = 'DSC03466_mini.JPG'
-#filename = 'DSC03467_mini.JPG'
+#filename = 'DSC03466_mini.JPG'
+filename = 'DSC03467_mini.JPG'
 image = cv2.imread('/'.join((images_dir, filename)))
 cv2.moveWindow('experiment', 100, 100)
 
@@ -45,7 +45,11 @@ def mouse_callback(event, x, y, flags, image):
             subimage = get_subimage(image, *box)
             #cv2.imshow('subimage', subimage)
             plot_hist_hls(subimage)
-            scene.analysis(subimage)
+            (contours, info_list) = scene.analysis(subimage)
+            if info_list:
+                print info_list[0][0], info_list[0][2]
+                contour_ids = info_list[0][1]
+                scene.highlight_contours(subimage, contours, contour_ids)
             first_anchor = None
             second_anchor = None
 
@@ -59,11 +63,18 @@ if debug:
             cv2.destroyAllWindows()
             break
 else:
+    info_list = []
     while True:
         cv2.imshow(main_window, image)
         key = cv2.waitKey(10)
         if key == 32:
-            scene.analysis(image)
+            if not info_list:
+                (contours, info_list) = scene.analysis(image)
+            if info_list:
+                info = info_list.pop(0)
+                contour_ids = info[1]
+                print info[0], info[2]
+                scene.highlight_contours(image, contours, contour_ids)
         elif key == 27:
             cv2.destroyAllWindows()
             break

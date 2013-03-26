@@ -23,7 +23,7 @@ def feature_detector(graph, card, image, contours):
     result = sum(result)/len(result)
     #print result
     lb = 0.30
-    ub = 0.95
+    ub = 0.93
     if result <= lb:
         shading = 'open'
     elif lb < result <= ub:

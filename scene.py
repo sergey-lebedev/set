@@ -134,14 +134,14 @@ def analysis(image):
     info = []
     for s, ids in pairs:
         veracity = cards_veracity(cards, ids)
-        info.append((veracity, ids, s))
+        info.append([veracity, ids, s])
+    contour_ids = [] 
     if card_ids:
         info = sorted(info, reverse=True)
-        #print info
-        print info[0][2]
-        contour_ids = map(lambda x: int(cards[x]['id']), info[0][1])
-        highlight_contours(image, contours, contour_ids)
+        for i, elem in enumerate(info): 
+            info[i][1] = map(lambda x: int(cards[x]['id']), elem[1])
     else:
         print 'None'
     print cards
     #print figures
+    return contours, info

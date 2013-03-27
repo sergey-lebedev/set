@@ -66,19 +66,6 @@ def normalize_symbols(symbols):
     #print symbols
     return symbols
 
-def calculate_symbols(metrics, figures, symbol_list):
-    symbols = {}
-    # cummulative sum
-    for symbol in symbol_list:
-        summ = 0
-        counter = 0
-        for i, figure in enumerate(figures):
-            if figure['symbols'].has_key(symbol):
-                summ += metrics[i] * figure['symbols'][symbol]
-                counter += 1
-        symbols[symbol] = summ / counter
-    return symbols
-
 def classifier(cards, contours, figure_moments):
     figures = []
     figures_list = []
@@ -93,11 +80,28 @@ def classifier(cards, contours, figure_moments):
     # clustering
     clusters = forel(figures_list, figure_moments)
     #print clusters
+    values = figure_moments.values()
+    #print values
+    centers = map(lambda x: cluster_center(x, figure_moments), clusters)
+    #print centers
+    # EM clustering
+    n = len(clusters)
+    if n > set_number: 
+        n = set_number
+        centers = range(0, set_number)
+        centers = map(lambda x: x * (1.0 / (set_number - 1)), centers)
+    #print centers
+    em = cv2.EM(n)
+    em.trainE(np.array(values), np.array(centers))
     # init symbols
-    symbol_list = range(len(clusters))
+    symbol_list = range(n)
     for figure_id in figures_list:
         figure = {'id': figure_id, 'symbols': {}}
-        measures = mocm(figure_moments[figure_id], clusters, figure_moments)
+        if em.isTrained:
+            (dummy, emmocm) = em.predict(np.array(figure_moments[figure_id]))
+            measures = list(emmocm[0])        
+        else:
+            measures = mocm(figure_moments[figure_id], clusters, figure_moments)     
         symbols = {}
         for symbol in symbol_list:
             symbols[symbol] = measures[symbol]

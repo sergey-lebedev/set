@@ -5,6 +5,7 @@ import time
 import math
 import color
 import symbol
+import filters
 import shading
 from plot import *
 from find import *
@@ -46,15 +47,14 @@ def feature_detector(image, graph, cards, contours):
     recognized_cards = []
     for card in cards:
         NUMBER = min(len(card['figures']), set_number)
-        SHADING = shading.feature_detector(graph, card, image, contours)
-        COLOR = None
         card['description'] = {}
         card['description']['veracity'] = 1
         card['description']['number'] = NUMBER
-        card['description']['shading'] = SHADING
     # second pass for color detection
-    figure_moments = symbol.feature_detector(cards, contours)
-    cards = symbol.classifier(cards, contours, figure_moments)
+    #figures = shading.feature_detector(graph, cards, image, contours)
+    #cards = shading.classifier(cards, figures)
+    figures = symbol.feature_detector(cards, contours)
+    cards = symbol.classifier(cards, contours, figures)
     figures = color.feature_detector(cards, image, contours, graph)
     cards = color.classifier(cards, figures)
     #print cards
@@ -124,6 +124,11 @@ def analysis(image):
     cards = find_cards(graph)
     graph = refining(graph, cards, contours)
     plot_hierarchy_tree(graph, 'refined')
+    # chromatic adaptation
+    #plot_hist_xyz(image, image_name='before')
+    image = filters.chromatic_adaptation(image)
+    #plot_hist_xyz(image, image_name='after')
+    # drawing contours
     draw_all_contours(image, contours)
     cards = feature_detector(image, graph, cards, contours)
     playing_cards = [card['description'] for card in cards]

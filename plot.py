@@ -18,38 +18,61 @@ def get_subimage(image, first_anchor, second_anchor):
     subimage = cv2.getRectSubPix(image, (width, height), center)
     return subimage
 
-def plot_selected_hist(hist, image_name=''):
+def plot_selected_hist(hist, image_name='', L=256, hist_type='polylines'):
     height = 300
     l1_norm_min = cv.Norm(cv.fromarray(hist), None, cv2.NORM_L1)
-    params = (300, 0, cv2.NORM_INF)
+    params = (height, 0, cv2.NORM_INF)
     cv2.normalize(hist, hist, *params)
     hist = np.int32(np.around(hist))
     # density of probability calculation
     bins = np.arange(L) #.reshape(256,1)
     pts = np.column_stack((bins, height - hist))
     hist_image = np.zeros((height, L, 1))
-    cv2.polylines(hist_image, [pts], False, (255, 255, 255))
-    cv2.imshow('%s'%image_name, hist_image)       
+    if hist_type == 'polylines':
+        cv2.polylines(hist_image, [pts], False, WHITE)
+    else:             
+        for (x, y) in pts:
+            cv2.line(hist_image, (x, y), (x, height), WHITE)
+    cv2.imshow(image_name, hist_image)       
 
 def plot_hist_hls(image, mask=None, image_name='', normalized=True):
     converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
     (hue, lightness, saturation) = cv2.split(converted_image)
     counts = (L, 256, 256)
     #components = {'h': hue, 's': saturation, 'l': lightness}
-    components = {}
+    components = {'h': hue}
     for name in components:
         cv2.imshow(image_name + ' ' + name, components[name])
     subhists = []
     for i, slice in enumerate((hue, lightness, saturation)):
         subhist = cv2.calcHist([slice], [0], mask, [counts[i]], [0, counts[i] - 1])
+        #print subhist[0]
         if normalized:
             params = (1, 0, cv2.NORM_L1)
             cv2.normalize(subhist, subhist, *params)
         subhists.append(subhist)
-    #plot_selected_hist(subhists[0], image_name)    
+    plot_selected_hist(subhists[0], image_name, L=L, hist_type='line')    
     return subhists
 
-def plot_hist(image, mask=None, image_name=''):
+def plot_hist_xyz(image, mask=None, image_name='', normalized=True):
+    converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2XYZ)
+    (x, y, z) = cv2.split(converted_image)
+    counts = (256, 256, 256)
+    components = {'x': x, 'y': y, 'z': z}
+    #components = {}
+    #for name in components:
+    #    cv2.imshow(image_name + ' ' + name, components[name])
+    subhists = []
+    for i, component in enumerate(components):
+        subhist = cv2.calcHist([components[component]], [0], mask, [counts[i]], [0, counts[i] - 1])
+        if normalized:
+            params = (1, 0, cv2.NORM_L1)
+            cv2.normalize(subhist, subhist, *params)
+        subhists.append(subhist)
+        plot_selected_hist(subhist, image_name + ': ' + component)    
+    return subhists
+
+def plot_hist(image, mask=None, image_name='', hist_type='polylines'):
     bins = np.arange(256) #.reshape(256,1)
     slices = cv2.split(image)
     colors = zip(('b', 'g', 'r'), slices)
@@ -62,7 +85,7 @@ def plot_hist(image, mask=None, image_name=''):
     subhists = []
     height = 300
     for i, (color, slice) in enumerate(colors):
-        cv2.imshow(color, slice)
+        #cv2.imshow(color, slice)
         subhist = cv2.calcHist([slice], [0], mask, [256], [0, 255])
         subhists.append(subhist)
         params = (0, height - 1, cv2.NORM_MINMAX)
@@ -78,11 +101,15 @@ def plot_hist(image, mask=None, image_name=''):
         # density of probability calculation
         subhists[i] = map(lambda x: float(x)/l1_norm_min, subhist)
         pts = np.column_stack((bins, height - subhist))
-        cv2.polylines(hist_image, [pts], False, color_dict[color])
-    #cv2.imshow('%s hist: '%image_name, hist_image)
+        if hist_type == 'polylines':
+            cv2.polylines(hist_image, [pts], False, color_dict[color])
+        else:             
+            for (x, y) in pts:
+                cv2.line(hist_image, (x, y), (x, height), color_dict[color])
+    cv2.imshow('%s %s'%(image_name, color), hist_image)
     #color_triangle = plot_color_triangle(image, mask)
     #cv.ShowImage('%s color triangle: '%image_name, color_triangle)
-    color_rectangle = plot_color_rectangle(image, mask)
+    #color_rectangle = plot_color_rectangle(image, mask)
     #cv.ShowImage('%s color triangle: '%image_name, color_rectangle)
     return subhists
 
@@ -191,16 +218,14 @@ def plot_inner_hist(image, outer_contour_id, contours):
     (x, y, width, height) = cv2.boundingRect(outer_contour)
     subimage = get_subimage(image, (x, y), (x + width, y + height))
     monochrome = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
-    mask = cv2.compare(monochrome, monochrome, cv2.CMP_EQ)
-    inverted_mask = mask.copy()
+    inverted_mask = cv2.compare(monochrome, monochrome, cv2.CMP_EQ)
     for i in range(width):
         for j in range(height):
             point = (x + i, y + j)
             outer_contour_test = cv2.pointPolygonTest(outer_contour, point, 0)
             if outer_contour_test > 0:
                 inverted_mask[j][i] = 0
-            else:
-                mask[j][i] = 0
+    mask = cv2.bitwise_not(inverted_mask)
     cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
     image_name = '%d'%(outer_contour_id)
     #cv2.imshow(image_name, subimage) 
@@ -208,13 +233,12 @@ def plot_inner_hist(image, outer_contour_id, contours):
     subhists = plot_hist_hls(subimage, mask, image_name)
     return subhists, subimage, mask, inverted_mask
 
-def plot_intercontour_hist(image, outer_contour_id, contours, graph):
+def plot_intercontour_hist(image, outer_contour_id, contours, graph, normalized=True):
     outer_contour = contours[outer_contour_id]
     (x, y, width, height) = cv2.boundingRect(outer_contour)
     subimage = get_subimage(image, (x, y), (x + width, y + height))
     monochrome = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
-    mask = cv2.compare(monochrome, monochrome, cv2.CMP_EQ)
-    inverted_mask = mask.copy()
+    inverted_mask = cv2.compare(monochrome, monochrome, cv2.CMP_EQ)
     inner_contours = [contours[int(contour_id)] for contour_id in graph.successors(outer_contour_id)]
     for i in range(width):
         for j in range(height):
@@ -226,16 +250,15 @@ def plot_intercontour_hist(image, outer_contour_id, contours, graph):
                 if inner_contour_test > 0: 
                     inner_contours_test = 1
                     break
-            if outer_contour_test > 0 and inner_contours_test < 0:
+            if outer_contour_test >= 0 and inner_contours_test < 0:
                 inverted_mask[j][i] = 0
-            else:
-                mask[j][i] = 0
-    cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
+    mask = cv2.bitwise_not(inverted_mask)
+    cv.Set(cv.fromarray(subimage), WHITE, cv.fromarray(inverted_mask))
     inner_contour_id = str(inner_contours)
     image_name = '%d-%s'%(outer_contour_id, inner_contours)
     #cv2.imshow(image_name, subimage) 
     #subhists = plot_hist(subimage, mask, image_name)
-    subhists = plot_hist_hls(subimage, mask, image_name)
+    subhists = plot_hist_hls(subimage, mask, image_name, normalized)
     return subhists, subimage, mask
 
 def draw_box(image, first, second):

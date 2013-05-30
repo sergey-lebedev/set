@@ -1,5 +1,6 @@
 import cv2
 import number
+import filters
 from plot import *
 
 def normalize_colors(colors):
@@ -22,7 +23,7 @@ def distance(hist_a, hist_b):
     params = (1, 0, cv2.NORM_L1)
     cv2.normalize(hist_a, hist_a, *params)
     cv2.normalize(hist_b, hist_b, *params)
-    result = cv2.compareHist(hist_a, hist_b, 3)
+    result = 1 - cv2.compareHist(hist_a, hist_b, 2)
     #print result
     return result
 
@@ -92,11 +93,11 @@ def forel_old(hist):
     return clusters
 
 def forel(figures):
-    r = 0.95
+    r = 0.65
     sequence = set(range(len(figures)))
-    #print elements
-    hists = map(lambda x: x['inner']['hue'], figures)
     #print sequence
+    #print figures
+    hists = map(lambda x: x['inner']['hue'], figures)
     clusters = []
     while sequence:
         #print 'seq: ', sequence
@@ -154,7 +155,7 @@ def feature_detector(cards, image, contours, graph):
             #step no.2
             outer_contour_id = int(figure_id)
             ((h, l, s), subimage, mask) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
-            #cv2.imshow(str(outer_contour_id), subimage)
+            cv2.imshow(str(outer_contour_id), subimage)
             figure['border']['hue'] = h
             figure['border']['lightness'] = l
             figure['border']['saturation'] = s
@@ -178,10 +179,10 @@ def feature_detector(cards, image, contours, graph):
                         #print 'figure_lightness: ',figure['border']['lightness'][value]    
                         if card['hist']['lightness'][value] > figure['border']['lightness'][value]:
                             figure_mask[j][i] = 0
-                            inverted_mask[j][i] = 255
+            inverted_mask = cv2.bitwise_not(figure_mask)
             #cv2.imshow(image_name + '(u)', subimage)
             #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'u')
-            cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
+            #cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
             #cv2.imshow(image_name + '(full)', subimage)
             #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'p')
             #step no.4

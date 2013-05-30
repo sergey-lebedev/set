@@ -1,8 +1,9 @@
 import cv2
 import scene
+import filters
 from plot import *
 
-debug = False
+debug = not False
 
 images_dir = './samples'
 ##filename = 'Webcam-1355581255.png'
@@ -14,9 +15,10 @@ images_dir = './samples'
 ##filename = 'Webcam-1356180892.png'
 #filename = 'Webcam-1356203219.png'
 #filename = 'DSC03466_mini.JPG'
-#filename = 'DSC03467_mini.JPG'
-filename = 'DSC03537_mini.JPG'
+filename = 'DSC03467_mini.JPG'
+#filename = 'DSC03537_mini.JPG'
 #filename = 'DSC03539_mini.JPG'
+#filename = 'sharp.bmp'
 image = cv2.imread('/'.join((images_dir, filename)))
 cv2.moveWindow('experiment', 100, 100)
 
@@ -46,7 +48,7 @@ def mouse_callback(event, x, y, flags, image):
         if first_anchor and second_anchor:
             subimage = get_subimage(image, *box)
             #cv2.imshow('subimage', subimage)
-            plot_hist_hls(subimage)
+            #plot_hist_hls(subimage)
             (contours, info_list) = scene.analysis(subimage)
             if info_list:
                 print info_list[0][0], info_list[0][2]
@@ -57,6 +59,7 @@ def mouse_callback(event, x, y, flags, image):
 
 main_window = 'main'
 temp = image.copy()
+
 if debug:
     while True:
         cv2.setMouseCallback(main_window, mouse_callback, image)

@@ -1,6 +1,8 @@
 import cv2
 from plot import *
 
+DEBUG = False
+
 def normalize_shadings(shadings):
     # normalize
     summ = sum(shadings.values())
@@ -61,30 +63,30 @@ def feature_detector(graph, cards, image, contours):
         ((h, background_lightness, s), background_subimage, mask) = plot_intercontour_hist(image, card_id, contours, graph, False)
         image_name = '%d-%d: '%(card_id, card_id)
         #cv2.imshow(image_name, background_subimage)
-        plot_selected_hist(background_lightness, image_name)
+        if DEBUG: plot_selected_hist(background_lightness, image_name)
         cb0 = cluster_center(background_lightness)
         #print background_lightness
         #print cb0
         #print background_subimage
         result = []
         for figure_id in card['figures']:
-            print 'figure_id: ', figure_id
+            if DEBUG: print 'figure_id: ', figure_id
             figure_outer_contour_id = int(figure_id)
             figure_inner_contour_id = int(graph.successors(figure_id)[0])
             ((h, contour_lightness, s), contour_subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph, False)
             image_name = '%d-%d: '%(card_id, figure_outer_contour_id)
             #cv2.imshow(image_name, contour_subimage)
-            plot_selected_hist(contour_lightness, image_name)
+            if DEBUG: plot_selected_hist(contour_lightness, image_name)
             #print contour_lightness
             cc0 = cluster_center(contour_lightness)
             #print cc0
             ((h, lightness, s), subimage, mask) = plot_intercontour_hist(image, figure_inner_contour_id, contours, graph, False)
             image_name = '%d-%d: '%(card_id, figure_inner_contour_id)
             #cv2.imshow(image_name, subimage)
-            plot_selected_hist(lightness, image_name)
+            if DEBUG: plot_selected_hist(lightness, image_name)
             #print lightness
             centers = [cb0, cc0]
-            print centers
+            if DEBUG: print centers
             mixture = mix([background_lightness, contour_lightness])
             #print 'mixture: ', mixture
             CLUSTER_NUM = 2
@@ -98,25 +100,25 @@ def feature_detector(graph, cards, image, contours):
             means = map(lambda x: float(x), em.getMat('means'))
 
             [cb, cc] = means
-            print means
+            if DEBUG: print means
             #print em.paramHelp('means')
             h1 = cv2.compareHist(lightness, contour_lightness, 2)
             h2 = cv2.compareHist(lightness, background_lightness, 2)
             #print h1, h2
             p = h1 / (h1 + h2)
-            print p
+            if DEBUG: print p
             #p = prob(lightness, em, CLUSTER_NUM)
             ca = cluster_center(lightness)
             em = cv2.EM(CLUSTER_NUM)
             em.trainE(np.array(mix([lightness])), np.array(means))
-            print em.getMat('means')
+            if DEBUG: print em.getMat('means')
             #print em.getMat('covs')
-            print em.getMat('weights')         
+            if DEBUG: print em.getMat('weights')         
             p =  (ca - min(cb, cc)) / abs(cb - cc)
             #(dummy, check) = em.predict(np.array(cb))
             #check = list(check[0])
             #if not check.index(max(check)): p.reverse()
-            print p
+            if DEBUG: print p
             figures[figure_id] = {'shading': p}
     '''
     lb = 0.30
@@ -136,7 +138,7 @@ def classifier(cards, figures):
     for figure in figures:
         values.append(figures[figure]['shading'])
     values.sort()
-    print values
+    if DEBUG: print values
     #clusters = hierarchy_group(figures)
     shading_list = range(len(clusters))
     for card in cards:

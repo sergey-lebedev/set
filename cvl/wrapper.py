@@ -5,7 +5,7 @@ from plot import *
 
 debug = not False
 
-images_dir = './samples'
+images_dir = './cvl/samples'
 ##filename = 'Webcam-1355581255.png'
 #filename = 'Webcam-1355052953.png'
 #filename = 'Webcam-1356160723.png'
@@ -64,7 +64,7 @@ if debug:
     while True:
         cv2.setMouseCallback(main_window, mouse_callback, image)
         cv2.imshow(main_window, temp)
-        if cv2.waitKey(10) == 27:
+        if cv2.waitKey(10) & 0xff == 27:
             cv2.destroyAllWindows()
             break
 else:
@@ -72,7 +72,8 @@ else:
     while True:
         cv2.imshow(main_window, image)
         key = cv2.waitKey(10)
-        if key == 32:
+        #print key
+        if key & 0xff == 32:
             if not info_list:
                 (contours, info_list) = scene.analysis(image)
             if info_list:
@@ -80,6 +81,6 @@ else:
                 contour_ids = info[1]
                 print info[0], info[2]
                 scene.highlight_contours(image, contours, contour_ids)
-        elif key == 27:
+        elif key & 0xff == 27:
             cv2.destroyAllWindows()
             break

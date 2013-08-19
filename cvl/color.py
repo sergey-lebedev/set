@@ -1,7 +1,8 @@
 import cv2
-import number
 import filters
 from plot import *
+
+DEBUG = False
 
 def normalize_colors(colors):
     # normalize
@@ -155,7 +156,7 @@ def feature_detector(cards, image, contours, graph):
             #step no.2
             outer_contour_id = int(figure_id)
             ((h, l, s), subimage, mask) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
-            cv2.imshow(str(outer_contour_id), subimage)
+            if DEBUG: cv2.imshow(str(outer_contour_id), subimage)
             figure['border']['hue'] = h
             figure['border']['lightness'] = l
             figure['border']['saturation'] = s

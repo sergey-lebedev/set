@@ -1,6 +1,6 @@
 import cv
 import cv2
-import set
+from game.find import *
 import time
 import math
 import color
@@ -8,8 +8,10 @@ import symbol
 import filters
 import shading
 from plot import *
-from find import *
+from game import set
 from pygraphviz import *
+
+DEBUG = False
 
 def intercontour_gap_processing(image, contours, graph, nodes_on_level, level):
     # intercontour gap
@@ -123,7 +125,7 @@ def analysis(image):
     #plot_hierarchy_tree(graph, 'raw')
     cards = find_cards(graph)
     graph = refining(graph, cards, contours)
-    plot_hierarchy_tree(graph, 'refined')
+    if DEBUG: plot_hierarchy_tree(graph, 'refined')
     # chromatic adaptation
     #plot_hist_xyz(image, image_name='before')
     image = filters.chromatic_adaptation(image)

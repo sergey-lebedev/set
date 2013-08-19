@@ -1,7 +1,8 @@
 import cv
 import cv2
-import number
 from plot import *
+
+DEBUG = False
 
 def distance(a, b):
     result = abs(a - b)    

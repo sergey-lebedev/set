@@ -121,5 +121,7 @@ if __name__ == '__main__':
         result = bisect_unsharp_mask(image, 0.99, 1, 0)
         tock = time.time()
         #print tock - tick
+        result = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
+        result = cv2.adaptiveThreshold(result, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 29, 9)
         cv2.imshow('result', result)
         if key == 27: break

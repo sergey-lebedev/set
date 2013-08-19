@@ -82,9 +82,9 @@ def chromatic_adaptation(image):
 
 def execute_chromatic_adaptation(image):
     cv2.imshow('image', image)
-    plot_hist(image, image_name='before', hist_type='')
+    if DEBUG: plot_hist(image, image_name='before', hist_type='')
     result = chromatic_adaptation(image)
-    plot_hist(result, image_name='after', hist_type='')
+    if DEBUG: plot_hist(result, image_name='after', hist_type='')
     cv2.imshow('result', result)
     #cv2.imwrite('result.bmp', result)
     (mask, inverted_mask) = achromatic_mask(result)

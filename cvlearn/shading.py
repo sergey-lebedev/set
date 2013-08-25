@@ -1,29 +1,9 @@
 import cv2
 from plot import *
+import classificator
+Classify = classificator.ShadingClassificator()
 
 DEBUG = False
-
-def normalize_shadings(shadings):
-    # normalize
-    summ = sum(shadings.values())
-    #print colors
-    #print summ
-    if summ != 0:
-        for shading in shading: shadings[shading] /= summ
-    else:
-        for shading in shading: shadings[shading] = 1.0 / len(shadings)
-    #print colors
-    return shadings
-
-def cluster_center(hist):
-    mass = 0.0
-    accum = 0.0
-    for index, value in enumerate(hist):
-        mass += value[0] * index
-        accum += value[0]
-    center = mass / accum
-    #print center
-    return center
 
 def mix(hists):
     mixture = []
@@ -64,7 +44,7 @@ def feature_detector(graph, cards, image, contours):
         image_name = '%d-%d: '%(card_id, card_id)
         #cv2.imshow(image_name, background_subimage)
         if DEBUG: plot_selected_hist(background_lightness, image_name)
-        cb0 = cluster_center(background_lightness)
+        cb0 = Classify.cluster_center(background_lightness)
         #print background_lightness
         #print cb0
         #print background_subimage
@@ -78,7 +58,7 @@ def feature_detector(graph, cards, image, contours):
             #cv2.imshow(image_name, contour_subimage)
             if DEBUG: plot_selected_hist(contour_lightness, image_name)
             #print contour_lightness
-            cc0 = cluster_center(contour_lightness)
+            cc0 = Classify.cluster_center(contour_lightness)
             #print cc0
             ((h, lightness, s), subimage, mask) = plot_intercontour_hist(image, figure_inner_contour_id, contours, graph, False)
             image_name = '%d-%d: '%(card_id, figure_inner_contour_id)
@@ -108,7 +88,7 @@ def feature_detector(graph, cards, image, contours):
             p = h1 / (h1 + h2)
             if DEBUG: print p
             #p = prob(lightness, em, CLUSTER_NUM)
-            ca = cluster_center(lightness)
+            ca = Classify.cluster_center(lightness)
             em = cv2.EM(CLUSTER_NUM)
             em.trainE(np.array(mix([lightness])), np.array(means))
             if DEBUG: print em.getMat('means')
@@ -151,7 +131,7 @@ def classifier(cards, figures):
             for shading in shading_list:
                 if figure['shading'].has_key(shading):
                    card_shadings[shading] += figure['shading'][shading]
-        card_shadings = normalize_shadings(card_shadings)
+        card_shadings = Classify.normalize(card_shadings)
         #print card_shadings
         ccv = card_shading.values()
         card_shading = card_shading.keys()[ccv.index(max(ccv))]

@@ -1,52 +1,10 @@
 import cv2
 import filters
 from plot import *
+import classificator
+Classify = classificator.ColorClassificator()
 
 DEBUG = False
-
-def normalize_colors(colors):
-    # normalize
-    summ = sum(colors.values())
-    #print colors
-    #print summ
-    if summ != 0:
-        for color in colors: colors[color] /= summ
-    else:
-        for color in colors: colors[color] = 1.0 / len(colors)
-    #print colors
-    return colors
-
-def distance_old(a, b):
-    result = abs(a - b)
-    return result
-
-def distance(hist_a, hist_b):
-    params = (1, 0, cv2.NORM_L1)
-    cv2.normalize(hist_a, hist_a, *params)
-    cv2.normalize(hist_b, hist_b, *params)
-    result = 1 - cv2.compareHist(hist_a, hist_b, 2)
-    #print result
-    return result
-
-def cluster_center_old(cluster, hist):
-    accumulator = 0
-    for member in cluster:
-        #print member
-        #print hist[member % L]
-        accumulator += member*hist[member % L]
-        #print accumulator
-    #print accumulator
-    subhist = map(lambda x: hist[x % L], cluster)
-    #print subhist
-    #print sum(subhist)
-    center = accumulator / sum(subhist)
-    center %= L
-    return center
-
-def cluster_center(cluster, hists):
-    subhists = map(lambda x: hists[x], cluster)
-    center = reduce(lambda x, y: x + y, subhists)
-    return center
 
 def roi_old(sequence, c):
     r = 15
@@ -60,7 +18,7 @@ def roi_old(sequence, c):
         subsequence = set(map(lambda x: x + left_cnt * L, sequence))
         band |= subsequence
     #print band
-    raw_cluster = set(filter(lambda x: distance(x, c) < r, band))
+    raw_cluster = set(filter(lambda x: Classify.distance(x, c) < r, band))
     return raw_cluster
 
 def forel_old(hist):
@@ -79,11 +37,11 @@ def forel_old(hist):
         raw_cluster = set([i])
         while initial != final:
             #print 'raw: ', raw_cluster
-            initial = cluster_center(raw_cluster, hist)
+            initial = Classify.cluster_center(raw_cluster, hist)
             #print 'initial:', initial
             raw_cluster = roi(sequence, initial)
             #print 'raw: ', raw_cluster
-            final = cluster_center(raw_cluster, hist)
+            final = Classify.cluster_center(raw_cluster, hist)
             cluster = set(map(lambda x: x % L, raw_cluster))
             #print cluster
             #print 'final:', final
@@ -106,12 +64,12 @@ def forel(figures):
         initial = hists[sequence_list[0]]
         final = hists[sequence_list[-1]]
         cluster = set([sequence_list[0]])
-        while distance(initial, final) > 1e-7:
+        while Classify.distance(initial, final) > 1e-7:
             #print 'cluster: ', cluster
-            initial = cluster_center(cluster, hists)
+            initial = Classify.cluster_center(cluster, hists)
             #print 'initial:', initial
-            cluster = set(filter(lambda x: distance(hists[x], initial) < r, sequence))
-            final = cluster_center(cluster, hists)
+            cluster = set(filter(lambda x: Classify.distance(hists[x], initial) < r, sequence))
+            final = Classify.cluster_center(cluster, hists)
             #print cluster
             #print 'final:', final
         #print cluster
@@ -119,22 +77,6 @@ def forel(figures):
         clusters.append((cluster, final))
     #print clusters
     return clusters
-
-def mocm(element, clusters, values):
-    measures = []
-    for cluster in clusters:
-        measure = distance(element, cluster_center(cluster, values))    
-        measures.append(measure)
-    #print measures
-    summ = sum(measures)
-    #print summ
-    if summ != 0:
-        measures = map(lambda x: 1 - (x / summ), measures)
-        summ = sum(measures)
-    if summ != 0:
-        measures = map(lambda x: x / summ, measures)
-    #print measures
-    return measures
 
 def feature_detector(cards, image, contours, graph):
     figures = []
@@ -230,7 +172,7 @@ def classifier(cards, figures):
         colors = {}
         for color in color_list:
             #print hist
-            metric = 1 - distance(color_hists[color], hist)
+            metric = 1 - Classify.distance(color_hists[color], hist)
             #print 'color: ', color
             #print 'metric: ', metric
             #metrics.append(metric)
@@ -251,7 +193,7 @@ def classifier(cards, figures):
             for color in color_list:
                 if figure['colors'].has_key(color):
                    card_colors[color] += figure['colors'][color]
-        card_colors = normalize_colors(card_colors)
+        card_colors = Classify.normalize(card_colors)
         #print card_colors
         ccv = card_colors.values()
         card_color = card_colors.keys()[ccv.index(max(ccv))]

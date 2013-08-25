@@ -1,19 +1,10 @@
 import cv
 import cv2
 from plot import *
+import classificator
+Classify = classificator.SymbolClassificator()
 
 DEBUG = False
-
-def distance(a, b):
-    result = abs(a - b)    
-    return result
-
-def cluster_center(cluster, values):
-    accumulator = 0
-    for member in cluster:
-        accumulator += values[member]
-    center = accumulator / len(cluster)
-    return center
 
 def forel(elements, values):
     #print elements
@@ -28,107 +19,16 @@ def forel(elements, values):
         cluster = set([i])
         initial = values[i]
         while initial != final:
-            initial = cluster_center(cluster, values)
+            initial = Classify.cluster_center(cluster, values)
             #print 'initial:', initial
-            cluster = set(filter(lambda x: distance(initial, values[x]) < r, sequence))
-            final = cluster_center(cluster, values)
+            cluster = set(filter(lambda x: Classify.distance(initial, values[x]) < r, sequence))
+            final = Classify.cluster_center(cluster, values)
             #print 'final:', final
         #print cluster
         sequence -= cluster
         clusters.append(cluster)
     #print clusters
     return clusters
-
-def mocm(element, clusters, values):
-    measures = []
-    for cluster in clusters:
-        measure = distance(element, cluster_center(cluster, values))    
-        measures.append(measure)
-    #print measures
-    summ = sum(measures)
-    #print summ
-    if summ != 0:
-        measures = map(lambda x: 1 - (x / summ), measures)
-        summ = sum(measures)
-    if summ != 0:
-        measures = map(lambda x: x / summ, measures)
-    #print measures
-    return measures
-
-def normalize_symbols(symbols):
-    # normalize
-    summ = sum(symbols.values())
-    #print symbols
-    #print summ
-    if summ != 0:
-        for symbol in symbols: symbols[symbol] /= summ
-    else:
-        for symbol in symbols: symbols[symbol] = 1.0 / len(symbols)
-    #print symbols
-    return symbols
-
-def classifier(cards, contours, figure_moments):
-    figures = []
-    figures_list = []
-    metric_type = cv.CV_CONTOURS_MATCH_I2
-    max_number = max(map(lambda x: x['description']['number'], cards))
-    number_list = range(max_number + 1)
-    number_list.reverse()
-    for number in number_list: 
-        for card in filter(lambda x: x['description']['number'] == number, cards):
-            figures_list.extend(card['figures'])
-    #print figures_list
-    # clustering
-    clusters = forel(figures_list, figure_moments)
-    #print clusters
-    values = figure_moments.values()
-    #print values
-    centers = map(lambda x: cluster_center(x, figure_moments), clusters)
-    #print centers
-    # EM clustering
-    n = len(clusters)
-    if n > set_number: 
-        n = set_number
-        centers = range(0, set_number)
-        centers = map(lambda x: x * (1.0 / (set_number - 1)), centers)
-    #print centers
-    em = cv2.EM(n)
-    em.trainE(np.array(values), np.array(centers))
-    # init symbols
-    symbol_list = range(n)
-    for figure_id in figures_list:
-        figure = {'id': figure_id, 'symbols': {}}
-        if em.isTrained:
-            (dummy, emmocm) = em.predict(np.array(figure_moments[figure_id]))
-            measures = list(emmocm[0])        
-        else:
-            measures = mocm(figure_moments[figure_id], clusters, figure_moments)     
-        symbols = {}
-        for symbol in symbol_list:
-            symbols[symbol] = measures[symbol]
-        figure['symbols'] = symbols   
-        figures.append(figure)
-    #print figures
-    # card symbol detector
-    for card in cards:
-        figure_list = card['figures']
-        card_symbols = dict([(i, 0) for i in symbol_list])
-        #print card_symbols
-        for figure_id in figure_list:
-            figure = filter(lambda x: x['id'] == figure_id, figures)[0]
-            #print figure
-            for symbol in symbol_list:
-                if figure['symbols'].has_key(symbol):
-                    card_symbols[symbol] += figure['symbols'][symbol]
-        card_symbols = normalize_symbols(card_symbols)
-        #print card_symbols
-        csv = card_symbols.values()
-        card_symbol = card_symbols.keys()[csv.index(max(csv))]
-        #print card_symbol
-        card['description']['symbol'] = card_symbol
-        card['description']['veracity'] *= max(csv)
-        #print card['description']['veracity']
-    return cards
 
 def feature_detector(cards, contours):
     figure_contours = []
@@ -171,3 +71,66 @@ def feature_detector(cards, contours):
     #plot_heatmap(similarity_matrix, n)
     #print figure_moments
     return figure_moments
+
+def classifier(cards, contours, figure_moments):
+    figures = []
+    figures_list = []
+    metric_type = cv.CV_CONTOURS_MATCH_I2
+    max_number = max(map(lambda x: x['description']['number'], cards))
+    number_list = range(max_number + 1)
+    number_list.reverse()
+    for number in number_list: 
+        for card in filter(lambda x: x['description']['number'] == number, cards):
+            figures_list.extend(card['figures'])
+    #print figures_list
+    # clustering
+    clusters = forel(figures_list, figure_moments)
+    #print clusters
+    values = figure_moments.values()
+    #print values
+    centers = map(lambda x: Classify.cluster_center(x, figure_moments), clusters)
+    #print centers
+    # EM clustering
+    n = len(clusters)
+    if n > set_number: 
+        n = set_number
+        centers = range(0, set_number)
+        centers = map(lambda x: x * (1.0 / (set_number - 1)), centers)
+    #print centers
+    em = cv2.EM(n)
+    em.trainE(np.array(values), np.array(centers))
+    # init symbols
+    symbol_list = range(n)
+    for figure_id in figures_list:
+        figure = {'id': figure_id, 'symbols': {}}
+        if em.isTrained:
+            (dummy, emmocm) = em.predict(np.array(figure_moments[figure_id]))
+            measures = list(emmocm[0])        
+        else:
+            measures = mocm(figure_moments[figure_id], clusters, figure_moments)     
+        symbols = {}
+        for symbol in symbol_list:
+            symbols[symbol] = measures[symbol]
+        figure['symbols'] = symbols   
+        figures.append(figure)
+    #print figures
+    # card symbol detector
+    for card in cards:
+        figure_list = card['figures']
+        card_symbols = dict([(i, 0) for i in symbol_list])
+        #print card_symbols
+        for figure_id in figure_list:
+            figure = filter(lambda x: x['id'] == figure_id, figures)[0]
+            #print figure
+            for symbol in symbol_list:
+                if figure['symbols'].has_key(symbol):
+                    card_symbols[symbol] += figure['symbols'][symbol]
+        card_symbols = Classify.normalize(card_symbols)
+        #print card_symbols
+        csv = card_symbols.values()
+        card_symbol = card_symbols.keys()[csv.index(max(csv))]
+        #print card_symbol
+        card['description']['symbol'] = card_symbol
+        card['description']['veracity'] *= max(csv)
+        #print card['description']['veracity']
+    return cards

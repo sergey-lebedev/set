@@ -3,7 +3,7 @@ from plot import *
 import classificator
 Classify = classificator.ShadingClassificator()
 
-DEBUG = False
+DEBUG = not False
 
 def mix(hists):
     mixture = []
@@ -99,7 +99,7 @@ def feature_detector(graph, cards, image, contours):
             #check = list(check[0])
             #if not check.index(max(check)): p.reverse()
             if DEBUG: print p
-            figures[figure_id] = {'shading': p}
+            figures[figure_id] = {'shadings': p}
     '''
     lb = 0.30
     ub = 0.93
@@ -116,27 +116,10 @@ def classifier(cards, figures):
     #print figures
     values = []
     for figure in figures:
-        values.append(figures[figure]['shading'])
+        values.append(figures[figure]['shadings'])
     values.sort()
     if DEBUG: print values
-    #clusters = hierarchy_group(figures)
+    #clusters = hierarchy_group(figures)    
     shading_list = range(len(clusters))
-    for card in cards:
-        figure_list = card['figures']
-        card_shadings = dict([(i, 0) for i in shading_list])
-        #print card_shadings
-        for figure_id in figure_list:
-            figure = filter(lambda x: x['id'] == figure_id, figures)[0]
-            #print figure
-            for shading in shading_list:
-                if figure['shading'].has_key(shading):
-                   card_shadings[shading] += figure['shading'][shading]
-        card_shadings = Classify.normalize(card_shadings)
-        #print card_shadings
-        ccv = card_shading.values()
-        card_shading = card_shading.keys()[ccv.index(max(ccv))]
-        #print card_shading
-        card['description']['shading'] = card_shading
-        card['description']['veracity'] *= max(ccv)
-        #print card['description']['veracity']
+    Classify.set_feature(cards, figures, shading_list, 'shading')
     return cards

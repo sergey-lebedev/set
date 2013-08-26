@@ -29,6 +29,28 @@ class Classificator():
         #print measures
         return measures
 
+    def set_feature(self, cards, figures, feature_list, feature_name):
+        # card feature detector
+        features_name = feature_name  + 's'
+        for card in cards:
+            figure_list = card['figures']
+            card_features = dict([(i, 0) for i in feature_list])
+            #print card_features
+            for figure_id in figure_list:
+                figure = filter(lambda x: x['id'] == figure_id, figures)[0]
+                #print figure
+                for feature in feature_list:
+                    if figure[features_name].has_key(feature):
+                       card_features[feature] += figure[features_name][feature]
+            card_features = self.normalize(card_features)
+            #print card_features
+            cfv = card_features.values()
+            card_feature = card_features.keys()[cfv.index(max(cfv))]
+            #print card_feature
+            card['description'][feature_name] = card_feature
+            card['description']['veracity'] *= max(cfv)
+            #print card['description']['veracity']
+
 class ColorClassificator(Classificator):
     def distance(self, hist_a, hist_b):
         params = (1, 0, cv2.NORM_L1)
@@ -57,6 +79,9 @@ class ColorClassificator(Classificator):
         subhists = map(lambda x: hists[x], cluster)
         center = reduce(lambda x, y: x + y, subhists)
         return center
+
+    def set_feature(self, cards, figures, feature_list, feature_name):
+        Classificator.set_feature(self, cards, figures, feature_list, 'color')
 
 class ShadingClassificator(Classificator):
     def cluster_center(self, hist):

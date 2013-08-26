@@ -183,22 +183,5 @@ def classifier(cards, figures):
         figure['colors'] = colors
     #print figures
     # card color detector
-    for card in cards:
-        figure_list = card['figures']
-        card_colors = dict([(i, 0) for i in color_list])
-        #print card_colors
-        for figure_id in figure_list:
-            figure = filter(lambda x: x['id'] == figure_id, figures)[0]
-            #print figure
-            for color in color_list:
-                if figure['colors'].has_key(color):
-                   card_colors[color] += figure['colors'][color]
-        card_colors = Classify.normalize(card_colors)
-        #print card_colors
-        ccv = card_colors.values()
-        card_color = card_colors.keys()[ccv.index(max(ccv))]
-        #print card_color
-        card['description']['color'] = card_color
-        card['description']['veracity'] *= max(ccv)
-        #print card['description']['veracity']
+    Classify.set_feature(cards, figures, color_list, 'color')
     return cards

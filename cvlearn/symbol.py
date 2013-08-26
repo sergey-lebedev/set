@@ -114,23 +114,5 @@ def classifier(cards, contours, figure_moments):
         figure['symbols'] = symbols   
         figures.append(figure)
     #print figures
-    # card symbol detector
-    for card in cards:
-        figure_list = card['figures']
-        card_symbols = dict([(i, 0) for i in symbol_list])
-        #print card_symbols
-        for figure_id in figure_list:
-            figure = filter(lambda x: x['id'] == figure_id, figures)[0]
-            #print figure
-            for symbol in symbol_list:
-                if figure['symbols'].has_key(symbol):
-                    card_symbols[symbol] += figure['symbols'][symbol]
-        card_symbols = Classify.normalize(card_symbols)
-        #print card_symbols
-        csv = card_symbols.values()
-        card_symbol = card_symbols.keys()[csv.index(max(csv))]
-        #print card_symbol
-        card['description']['symbol'] = card_symbol
-        card['description']['veracity'] *= max(csv)
-        #print card['description']['veracity']
+    Classify.set_feature(cards, figures, symbol_list, 'symbol')
     return cards

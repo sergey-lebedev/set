@@ -183,5 +183,5 @@ def classifier(cards, figures):
         figure['colors'] = colors
     #print figures
     # card color detector
-    Classify.set_feature(cards, figures, color_list, 'color')
+    Classify.set_feature(cards, figures, color_list)
     return cards

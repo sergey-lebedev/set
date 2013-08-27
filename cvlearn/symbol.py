@@ -114,5 +114,5 @@ def classifier(cards, contours, figure_moments):
         figure['symbols'] = symbols   
         figures.append(figure)
     #print figures
-    Classify.set_feature(cards, figures, symbol_list, 'symbol')
+    Classify.set_feature(cards, figures, symbol_list)
     return cards

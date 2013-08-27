@@ -121,5 +121,5 @@ def classifier(cards, figures):
     if DEBUG: print values
     #clusters = hierarchy_group(figures)    
     shading_list = range(len(clusters))
-    Classify.set_feature(cards, figures, shading_list, 'shading')
+    Classify.set_feature(cards, figures, shading_list)
     return cards

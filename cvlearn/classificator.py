@@ -80,7 +80,7 @@ class ColorClassificator(Classificator):
         center = reduce(lambda x, y: x + y, subhists)
         return center
 
-    def set_feature(self, cards, figures, feature_list, feature_name):
+    def set_feature(self, cards, figures, feature_list):
         Classificator.set_feature(self, cards, figures, feature_list, 'color')
 
 class ShadingClassificator(Classificator):
@@ -94,6 +94,9 @@ class ShadingClassificator(Classificator):
         #print center
         return center
 
+    def set_feature(self, cards, figures, feature_list):
+        Classificator.set_feature(self, cards, figures, feature_list, 'shading')
+
 class SymbolClassificator(Classificator):
     def distance(self, a, b):
         result = abs(a - b)    
@@ -105,3 +108,6 @@ class SymbolClassificator(Classificator):
             accumulator += values[member]
         center = accumulator / len(cluster)
         return center
+
+    def set_feature(self, cards, figures, feature_list):
+        Classificator.set_feature(self, cards, figures, feature_list, 'symbol')

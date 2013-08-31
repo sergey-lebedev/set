@@ -261,22 +261,6 @@ def plot_intercontour_hist(image, outer_contour_id, contours, graph, normalized=
     subhists = plot_hist_hls(subimage, mask, image_name, normalized)
     return subhists, subimage, mask
 
-def draw_box(image, first, second):
-    cv2.rectangle(image, first, second, (0, 255, 0))
-
-def draw_all_contours(image, contours):
-    copy = image.copy()
-    color = (255, 255, 255)
-    for i, contour in enumerate(contours):
-        cv2.drawContours(copy, contours, i, color, 1)
-        rect = cv2.boundingRect(contour)
-        (a, b, c, d) = rect
-        rectangle = ((a, b), (a + c, b + d), WHITE)
-        cv2.putText(copy, str(i), ((a + c), (b + d)), 1, 1, WHITE)
-        cv2.rectangle(copy, *rectangle)
-    cv2.imshow('result', copy)
-    return copy
-
 def plot_figures_hist(contours, hierarchy, image):
     (graph, nodes_on_level, difference) = find_figures(hierarchy)
     # two equal peaks
@@ -285,9 +269,3 @@ def plot_figures_hist(contours, hierarchy, image):
         # intercontour gap
         subimage, mask = intercontour_gap_processing(image, contours, graph, nodes_on_level, level)
     return subimage, mask
-
-def highlight_contours(image, contours, indexes):
-    copy = image.copy()
-    color = (0, 0, 255)
-    for index in indexes: cv2.drawContours(copy, contours, index, color, 2)
-    cv2.imshow('highlighted', copy)

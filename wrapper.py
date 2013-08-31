@@ -1,5 +1,5 @@
 import cv2
-from cvlearn import scene
+from cvlearn.scene import Scene
 from cvlearn import filters
 from cvlearn.plot import *
 
@@ -27,6 +27,9 @@ second_anchor = None
 box_drawing = False
 box = ((-1, -1), (0, 0))   
 
+def draw_box(image, first, second):
+    cv2.rectangle(image, first, second, (0, 255, 0))
+
 def mouse_callback(event, x, y, flags, image):
     global first_anchor
     global second_anchor
@@ -49,11 +52,10 @@ def mouse_callback(event, x, y, flags, image):
             subimage = get_subimage(image, *box)
             #cv2.imshow('subimage', subimage)
             #plot_hist_hls(subimage)
-            (contours, info_list) = scene.analysis(subimage)
-            if info_list:
-                print info_list[0][0], info_list[0][2]
-                contour_ids = info_list[0][1]
-                scene.highlight_contours(subimage, contours, contour_ids)
+            scene = Scene(subimage)
+            scene.analysis()
+            if scene.info:
+                scene.highlight_contours()
             first_anchor = None
             second_anchor = None
 
@@ -68,19 +70,16 @@ if debug:
             cv2.destroyAllWindows()
             break
 else:
-    info_list = []
     while True:
         cv2.imshow(main_window, image)
         key = cv2.waitKey(10)
         #print key
+        scene = Scene(image)
         if key & 0xff == 32:
-            if not info_list:
-                (contours, info_list) = scene.analysis(image)
-            if info_list:
-                info = info_list.pop(0)
-                contour_ids = info[1]
-                print info[0], info[2]
-                scene.highlight_contours(image, contours, contour_ids)
+            if not scene.info:
+                scene.analysis()
+            else:
+                scene.highlight_contours()
         elif key & 0xff == 27:
             cv2.destroyAllWindows()
             break

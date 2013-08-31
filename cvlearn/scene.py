@@ -1,12 +1,12 @@
 import cv
 import cv2
-import find
 import time
 import math
 import color
 import symbol
 import filters
 import shading
+from find import *
 from plot import *
 from game import set
 from pygraphviz import *
@@ -40,11 +40,6 @@ def adaptive_threshold(image):
     cv2.imshow('threshold', result)
     return result
 
-def find_all_contours(image):
-    result = adaptive_threshold(image)
-    contours, hierarchy = cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    return contours, hierarchy
-
 def feature_detector(image, graph, cards, contours):
     recognized_cards = []
     for card in cards:
@@ -61,21 +56,6 @@ def feature_detector(image, graph, cards, contours):
     cards = color.classifier(cards, figures)
     #print cards
     return cards
-
-def get_hierarchy_tree(hierarchy):
-    graph = AGraph(directed=True)
-    root = 'root'
-    graph.add_node(root)
-    sequence = hierarchy[0]
-    for i, node in enumerate(sequence):
-        index = str(i)
-        (h_next, h_prev, v_next, v_prev) = node
-        graph.add_node(index)
-        if v_prev == -1:
-            graph.add_edge([root, index])
-        else:
-            graph.add_edge([str(v_prev), index])
-    return graph
 
 def refining(graph, cards, contours):
     #print cards
@@ -109,46 +89,80 @@ def refining(graph, cards, contours):
             cards[card_id]['figures'].remove(figure_outer_contour_id)
             #print cards[card_id]['figures']
             #print 'figure cleaned'
-    return refined_graph
+    return refined_graph 
 
-def cards_veracity(cards, ids):
-    veracity = 1
-    for card_id in ids:
-        veracity *= cards[card_id]['description']['veracity']
-    return veracity    
+class Scene():
+    def __init__(self, image):
+        self.info = None
+        self.cards = None
+        self.image = image
+        self.find_all_contours()
+        self.get_hierarchy_tree()
 
-def analysis(image):
-    cards = []
-    figures = []
-    (contours, hierarchy) = find_all_contours(image)
-    graph = get_hierarchy_tree(hierarchy)
-    #plot_hierarchy_tree(graph, 'raw')
-    cards = find.find_cards(graph)
-    graph = refining(graph, cards, contours)
-    if DEBUG: plot_hierarchy_tree(graph, 'refined')
-    # chromatic adaptation
-    #plot_hist_xyz(image, image_name='before')
-    image = filters.chromatic_adaptation(image)
-    #plot_hist_xyz(image, image_name='after')
-    # drawing contours
-    draw_all_contours(image, contours)
-    cards = feature_detector(image, graph, cards, contours)
-    playing_cards = [card['description'] for card in cards]
-    sets, card_ids = set.search_set(playing_cards)
-    #print sets
-    #print card_ids
-    pairs = zip(sets, card_ids)
-    info = []
-    for s, ids in pairs:
-        veracity = cards_veracity(cards, ids)
-        info.append([veracity, ids, s])
-    contour_ids = [] 
-    if card_ids:
-        info = sorted(info, reverse=True)
-        for i, elem in enumerate(info): 
-            info[i][1] = map(lambda x: int(cards[x]['id']), elem[1])
-    else:
-        print 'None'
-    print cards
-    #print figures
-    return contours, info
+    def find_all_contours(self):
+        result = adaptive_threshold(self.image)
+        self.contours, self.hierarchy = cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    def get_hierarchy_tree(self):
+        self.graph = AGraph(directed=True)
+        root = 'root'
+        self.graph.add_node(root)
+        sequence = self.hierarchy[0]
+        for i, node in enumerate(sequence):
+            index = str(i)
+            (h_next, h_prev, v_next, v_prev) = node
+            self.graph.add_node(index)
+            if v_prev == -1:
+                self.graph.add_edge([root, index])
+            else:
+                self.graph.add_edge([str(v_prev), index])
+        #plot_hierarchy_tree(self.graph, 'raw')
+
+    def analysis(self):
+        figures = []
+        cards = Cards().find(self.graph)
+        self.graph = refining(self.graph, cards, self.contours)
+        if DEBUG: plot_hierarchy_tree(self.graph, 'refined')
+        # chromatic adaptation
+        #plot_hist_xyz(image, image_name='before')
+        image = filters.chromatic_adaptation(self.image)
+        #plot_hist_xyz(image, image_name='after')
+        # drawing contours
+        self.draw_all_contours()
+        cards = feature_detector(self.image, self.graph, cards, self.contours)
+        playing_cards = [card['description'] for card in cards]
+        sets, card_ids = set.search_set(playing_cards)
+        #print sets
+        #print card_ids
+        pairs = zip(sets, card_ids)
+        self.info = []
+        for s, ids in pairs:
+            veracity = Cards().veracity(cards, ids)
+            info.append([veracity, ids, s])
+        contour_ids = [] 
+        if card_ids:
+            self.info = sorted(self.info, reverse=True)
+            for i, elem in enumerate(info): 
+                self.info[i][1] = map(lambda x: int(cards[x]['id']), elem[1])
+        else:
+            print 'None'
+        print cards
+
+    def draw_all_contours(self):
+        copy = self.image.copy()
+        color = (255, 255, 255)
+        for i, contour in enumerate(self.contours):
+            cv2.drawContours(copy, self.contours, i, color, 1)
+            rect = cv2.boundingRect(contour)
+            (a, b, c, d) = rect
+            rectangle = ((a, b), (a + c, b + d), WHITE)
+            cv2.putText(copy, str(i), ((a + c), (b + d)), 1, 1, WHITE)
+            cv2.rectangle(copy, *rectangle)
+        cv2.imshow('result', copy)
+
+    def highlight_contours(self):
+        color = (0, 0, 255)
+        copy = self.image.copy()
+        for index in self.indexes: 
+            cv2.drawContours(copy, self.contours, index, color, 2)
+        cv2.imshow('highlighted', copy)

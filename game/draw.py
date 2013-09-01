@@ -1,5 +1,6 @@
 import pygame
 from patterns import *
+from math import pi
 
 def draw_card(card, screen, position, is_selected):
     images_dir = 'images'
@@ -16,12 +17,14 @@ def draw_card(card, screen, position, is_selected):
     # selection
     frame = pygame.surface.Surface(card_size)
     frame.fill((255, 255, 255))
+
     if is_selected:
         a = 6
         b = 5
         dx = 1
         dy = 1
         (x, y) = position
+        # filling
         color = (255, 255, 0)
         left_up_ellipse = (dx, dy, 2*a, 2*b)
         right_up_ellipse = (width - (2*a + dx), dy, 2*a, 2*b)
@@ -29,12 +32,26 @@ def draw_card(card, screen, position, is_selected):
         right_down_ellipse = (width - (2*a + dx), height - (2*b + dy), 2*a, 2*b)
         vertical_rectangle = pygame.Rect(dx + a, dy, width - 2*(dx + a), height - 2*dy)
         horizontal_rectangle = pygame.Rect(dx, dy + b, width - 2*dx, height - 2*(dy + b))
-        pygame.draw.rect(frame, color, vertical_rectangle)
-        pygame.draw.rect(frame, color, horizontal_rectangle)
-        pygame.draw.ellipse(frame, color, left_up_ellipse)
-        pygame.draw.ellipse(frame, color, right_up_ellipse)
-        pygame.draw.ellipse(frame, color, left_down_ellipse)
-        pygame.draw.ellipse(frame, color, right_down_ellipse)
+        rects = [vertical_rectangle, horizontal_rectangle]
+        for rect in rects: pygame.draw.rect(frame, color, rect)
+        ellipses = [left_up_ellipse, right_up_ellipse, left_down_ellipse, right_down_ellipse]
+        for ellipse in ellipses: pygame.draw.ellipse(frame, color, ellipse)
+        # border not presented cause pygame draws awful arcs
+        '''
+        border_color = (0, 0, 0)
+        top_line = ((dx + a, dy), (width - (a + dx), dy))
+        bottom_line = ((dx + a, height - dy), (width - (a + dx), height - dy))
+        left_line = ((dx, dy + b), (dx, height - (b + dy)))
+        rigth_line = ((width - dx, dy + b), (width - dx, height - (b + dy)))
+        lines = [top_line, bottom_line, left_line, rigth_line]
+        right_top_arc = (right_up_ellipse, 0, 2*pi)
+        left_top_arc = (left_up_ellipse, 0, 2*pi)
+        left_bottom_arc = (left_down_ellipse, 0, 2*pi)
+        right_bottom_arc = (right_down_ellipse, 0, 2*pi)
+        arcs = [right_top_arc, left_top_arc, left_bottom_arc, right_bottom_arc]
+        for line in lines: pygame.draw.line(frame, border_color, *line)
+        for arc in arcs: pygame.draw.arc(frame, border_color, *arc)
+        '''
     screen.blit(frame, position)
 
     delta = 33

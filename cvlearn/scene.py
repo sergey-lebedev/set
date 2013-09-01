@@ -124,9 +124,9 @@ class Scene():
         self.graph = refining(self.graph, cards, self.contours)
         if DEBUG: plot_hierarchy_tree(self.graph, 'refined')
         # chromatic adaptation
-        #plot_hist_xyz(image, image_name='before')
-        image = filters.chromatic_adaptation(self.image)
-        #plot_hist_xyz(image, image_name='after')
+        #plot_hist_xyz(self.image, image_name='before')
+        self.image = filters.chromatic_adaptation(self.image)
+        #plot_hist_xyz(self.image, image_name='after')
         # drawing contours
         self.draw_all_contours()
         cards = feature_detector(self.image, self.graph, cards, self.contours)

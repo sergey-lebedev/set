@@ -5,7 +5,7 @@ import time
 import bisect
 from plot import *
 import numpy as np
-images_dir = './samples' 
+images_dir = './samples'
 #filename = 'DSC03539_mini.JPG'
 filename = 'DSC03537_mini.JPG'
 #filename = 'output_rgb.png'
@@ -22,7 +22,7 @@ def achromatic_mask(image):
     mask = cv2.bitwise_not(inverted_mask)
     cv.Set(cv.fromarray(copy), (0, 0, 0), cv.fromarray(inverted_mask))
     cv2.imshow('achromatic mask', copy)
-    return mask, inverted_mask 
+    return mask, inverted_mask
 
 def median_filter(image):
     #copy = image.copy()
@@ -60,7 +60,7 @@ def simplest_color_balance(image, s1=0, s2=0, mask=None):
     #cv2.imshow('filter', copy)
     #tock = time.time()
     #print tock - tick
-    return copy 
+    return copy
 
 def balance(image, ax, bx, ay, by, az, bz):
     UMAX = 255
@@ -75,7 +75,7 @@ def balance(image, ax, bx, ay, by, az, bz):
         layer *= kernel
         layers[i] = layer
     copy = cv2.merge(layers)
-    return copy  
+    return copy 
 
 def chromatic_adaptation(image):
     return simplest_color_balance(image, 1.5, 1.5)
@@ -133,12 +133,12 @@ def cv_convolution(image, b):
     c = cv.CreateMat(image.shape[0] + d - 1, image.shape[1] + d - 1, cv.CV_8U)
     # getting gaussian dft
     dft_b = cv.CreateMat(dft_m, dft_n, cv.CV_64F)
-    #    
+    #   
     tmp = cv.GetSubRect(dft_b, (0, 0, b.shape[1], b.shape[0]))
     cv.Copy(cv.fromarray(b), tmp)
     tmp = cv.GetSubRect(dft_b, (b.shape[1], 0, dft_b.cols - b.shape[1], b.shape[0]))
     cv.Zero(tmp)
-    #    
+    #   
     cv.DFT(dft_b, dft_b, cv.CV_DXT_FORWARD, b.shape[0])
     # getting layers dft
     dfts = []
@@ -169,7 +169,7 @@ def cv_convolution(image, b):
 def cv2_convolution(image, b):
     dft_m = cv2.getOptimalDFTSize(image.shape[0] + b.shape[0] - 1)
     dft_n = cv2.getOptimalDFTSize(image.shape[1] + b.shape[1] - 1)
-    d = b.shape[0] 
+    d = b.shape[0]
     c = np.zeros((image.shape[0] + d - 1, image.shape[1] + d - 1), dtype='uint8')
     # getting gaussian dft
     dft_b = np.zeros((dft_m, dft_n), dtype='float64')
@@ -213,7 +213,7 @@ def cv2_deconvolution(image, b):
         a = np.array(channel, dtype='float64')
         dft_a = np.zeros((dft_m, dft_n), dtype='float64')
         dft_a[:a.shape[0], :a.shape[1]] = a
-        print 'deconv'  
+        print 'deconv' 
         dft_a = cv2.dft(dft_a, flags=cv2.DFT_COMPLEX_OUTPUT)
         dft_a = cv2.mulSpectrums(dft_a, ipsf, 0)
         print dft_a

@@ -74,7 +74,7 @@ def hls_unsharp_mask(image, amount, radius, threshold):
     cv2.imshow('mask', mask)
     cv2.imshow('l before', l)
     corrected = filters.simplest_color_balance(l, 10, 10)
-    #corrected = l * (1 + amount) - blurred * amount 
+    #corrected = l * (1 + amount) - blurred * amount
     cv2.imshow('corrected', corrected)
     l = blend(l, corrected, mask)
     cv2.imshow('l after', l)

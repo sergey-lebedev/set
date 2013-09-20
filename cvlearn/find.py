@@ -1,3 +1,12 @@
+class Figure():
+    def __init__(self):
+        self.description = {}
+
+class Card():
+    def __init__(self):
+        self.figures = []
+        self.description = {}
+
 class Figures():
     def find(self, graph):
         root = 'root'
@@ -18,6 +27,9 @@ class Figures():
         return nodes_on_level, difference, figures
 
 class Cards():
+    def __init__(self):
+        self.cards = []
+
     def two_equal_peaks_finder(self, difference):
         # two equal peaks
         level = None

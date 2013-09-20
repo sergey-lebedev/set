@@ -30,10 +30,10 @@ def plot_selected_hist(hist, image_name='', L=256, hist_type='polylines'):
     hist_image = np.zeros((height, L, 1))
     if hist_type == 'polylines':
         cv2.polylines(hist_image, [pts], False, WHITE)
-    else:             
+    else:            
         for (x, y) in pts:
             cv2.line(hist_image, (x, y), (x, height), WHITE)
-    cv2.imshow(image_name, hist_image)       
+    cv2.imshow(image_name, hist_image)      
 
 def plot_hist_hls(image, mask=None, image_name='', normalized=True):
     converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
@@ -51,7 +51,7 @@ def plot_hist_hls(image, mask=None, image_name='', normalized=True):
             params = (1, 0, cv2.NORM_L1)
             cv2.normalize(subhist, subhist, *params)
         subhists.append(subhist)
-    plot_selected_hist(subhists[0], image_name, L=L, hist_type='line')    
+    plot_selected_hist(subhists[0], image_name, L=L, hist_type='line')   
     return subhists
 
 def plot_hist_xyz(image, mask=None, image_name='', normalized=True):
@@ -69,7 +69,7 @@ def plot_hist_xyz(image, mask=None, image_name='', normalized=True):
             params = (1, 0, cv2.NORM_L1)
             cv2.normalize(subhist, subhist, *params)
         subhists.append(subhist)
-        plot_selected_hist(subhist, image_name + ': ' + component)    
+        plot_selected_hist(subhist, image_name + ': ' + component)   
     return subhists
 
 def plot_hist(image, mask=None, image_name='', hist_type='polylines'):
@@ -103,7 +103,7 @@ def plot_hist(image, mask=None, image_name='', hist_type='polylines'):
         pts = np.column_stack((bins, height - subhist))
         if hist_type == 'polylines':
             cv2.polylines(hist_image, [pts], False, color_dict[color])
-        else:             
+        else:            
             for (x, y) in pts:
                 cv2.line(hist_image, (x, y), (x, height), color_dict[color])
     cv2.imshow('%s %s'%(image_name, color), hist_image)
@@ -125,7 +125,7 @@ def plot_hierarchy_tree(graph, image_name='graph'):
     cv2.imshow(image_name, resized_graph)
 
 def plot_heatmap(similarity_matrix, n):
-    if n != 0: 
+    if n != 0:
         pixels = max(1, min(screen_width / n, screen_height / n))
         side = n * pixels
         heatmap = cv.CreateImage((side, side), cv.IPL_DEPTH_8U, 1)
@@ -143,7 +143,7 @@ def plot_color_triangle(image, mask):
     height = a
     width = int(math.ceil(2 * a / math.sqrt(3)))
     #print (width, height)
-    color_triangle = cv.CreateImage((width, height), cv.IPL_DEPTH_8U, 3)    
+    color_triangle = cv.CreateImage((width, height), cv.IPL_DEPTH_8U, 3)   
     (image_width, image_height) = cv.GetSize(cv.fromarray(image))
     #print (image_width, image_height)
     rectangle = (((0, 0), (width, 0), (width, height), (0, height)), BLACK)
@@ -164,7 +164,7 @@ def plot_color_triangle(image, mask):
                     b = (B / intensity)
                     g = (G / intensity)
                 #print b, g
-                x = math.sqrt(3) * (a - 1) * (1 - b) / 2 
+                x = math.sqrt(3) * (a - 1) * (1 - b) / 2
                 y = (a - 1) * (1 - g)
                 x = int(x)
                 y = int(y)
@@ -176,7 +176,7 @@ def plot_color_triangle(image, mask):
                 cv.FillConvexPoly(color_triangle, *rectangle)
     x = (a - 1) / math.sqrt(3)
     y = 2 * (a - 1) / 3.0
-    white_dot = (x, y) 
+    white_dot = (x, y)
     rectangle = ((white_dot, white_dot, white_dot, white_dot), WHITE)
     cv.FillConvexPoly(color_triangle, *rectangle)
     return color_triangle
@@ -186,7 +186,7 @@ def plot_color_rectangle(image, mask):
     width = 180
     height = 256
     #print (width, height)
-    color_rectangle = cv.CreateImage((width, height), cv.IPL_DEPTH_8U, 3)    
+    color_rectangle = cv.CreateImage((width, height), cv.IPL_DEPTH_8U, 3)   
     (image_width, image_height) = cv.GetSize(cv.fromarray(image))
     #print (image_width, image_height)
     rectangle = (((0, 0), (width, 0), (width, height), (0, height)), BLACK)
@@ -208,7 +208,7 @@ def plot_color_rectangle(image, mask):
                 cv.FillConvexPoly(color_rectangle, *rectangle)
     #x = (a - 1) / 2
     #y = (a - 1) / 2
-    #white_dot = (x, y) 
+    #white_dot = (x, y)
     #rectangle = ((white_dot, white_dot, white_dot, white_dot), WHITE)
     cv.FillConvexPoly(color_rectangle, *rectangle)
     return color_rectangle
@@ -228,7 +228,7 @@ def plot_inner_hist(image, outer_contour_id, contours):
     mask = cv2.bitwise_not(inverted_mask)
     cv.Set(cv.fromarray(subimage), (0, 0, 0), cv.fromarray(inverted_mask))
     image_name = '%d'%(outer_contour_id)
-    #cv2.imshow(image_name, subimage) 
+    #cv2.imshow(image_name, subimage)
     #subhists = plot_hist(subimage, mask, image_name)
     subhists = plot_hist_hls(subimage, mask, image_name)
     return subhists, subimage, mask, inverted_mask
@@ -247,7 +247,7 @@ def plot_intercontour_hist(image, outer_contour_id, contours, graph, normalized=
             inner_contours_test = -1
             for inner_contour in inner_contours:
                 inner_contour_test = cv2.pointPolygonTest(inner_contour, point, 0)
-                if inner_contour_test > 0: 
+                if inner_contour_test > 0:
                     inner_contours_test = 1
                     break
             if outer_contour_test >= 0 and inner_contours_test < 0:
@@ -256,7 +256,7 @@ def plot_intercontour_hist(image, outer_contour_id, contours, graph, normalized=
     cv.Set(cv.fromarray(subimage), WHITE, cv.fromarray(inverted_mask))
     inner_contour_id = str(inner_contours)
     image_name = '%d-%s'%(outer_contour_id, inner_contours)
-    #cv2.imshow(image_name, subimage) 
+    #cv2.imshow(image_name, subimage)
     #subhists = plot_hist(subimage, mask, image_name)
     subhists = plot_hist_hls(subimage, mask, image_name, normalized)
     return subhists, subimage, mask

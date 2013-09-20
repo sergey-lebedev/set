@@ -89,12 +89,12 @@ def refining(graph, cards, contours):
             cards[card_id]['figures'].remove(figure_outer_contour_id)
             #print cards[card_id]['figures']
             #print 'figure cleaned'
-    return refined_graph 
+    return refined_graph
 
 class Scene():
     def __init__(self, image):
         self.info = None
-        self.cards = None
+        self.cards = []
         self.image = image
         self.find_all_contours()
         self.get_hierarchy_tree()
@@ -139,10 +139,10 @@ class Scene():
         for s, ids in pairs:
             veracity = Cards().veracity(cards, ids)
             info.append([veracity, ids, s])
-        contour_ids = [] 
+        contour_ids = []
         if card_ids:
             self.info = sorted(self.info, reverse=True)
-            for i, elem in enumerate(info): 
+            for i, elem in enumerate(info):
                 self.info[i][1] = map(lambda x: int(cards[x]['id']), elem[1])
         else:
             print 'None'
@@ -163,6 +163,6 @@ class Scene():
     def highlight_contours(self):
         color = (0, 0, 255)
         copy = self.image.copy()
-        for index in self.indexes: 
+        for index in self.indexes:
             cv2.drawContours(copy, self.contours, index, color, 2)
         cv2.imshow('highlighted', copy)

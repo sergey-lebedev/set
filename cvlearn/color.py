@@ -119,7 +119,7 @@ def feature_detector(cards, image, contours, graph):
                         value = lightness[j][i]
                         #print value
                         #print 'card_lightness: ', card['hist']['lightness'][value]
-                        #print 'figure_lightness: ',figure['border']['lightness'][value]    
+                        #print 'figure_lightness: ',figure['border']['lightness'][value]   
                         if card['hist']['lightness'][value] > figure['border']['lightness'][value]:
                             figure_mask[j][i] = 0
             inverted_mask = cv2.bitwise_not(figure_mask)
@@ -132,7 +132,7 @@ def feature_detector(cards, image, contours, graph):
             (h, l, s) = plot_hist_hls(subimage, figure_mask, image_name, normalized=False)
             figure['inner']['hue'] = h
             figure['inner']['lightness'] = l
-            figure['inner']['saturation'] = s            
+            figure['inner']['saturation'] = s           
             figures.append(figure)
         # clear hist dictionary
         card['hist'] = {}
@@ -162,7 +162,7 @@ def classifier(cards, figures):
         cv2.normalize(hist, hist, *params)
         #print hist
         color_hists.append(hist)
-        #c += 1        
+        #c += 1       
         #plot_selected_hist(hist, str(c))
     for figure in figures:
         hist = figure['inner']['hue']

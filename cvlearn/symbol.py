@@ -79,7 +79,7 @@ def classifier(cards, contours, figure_moments):
     max_number = max(map(lambda x: x['description']['number'], cards))
     number_list = range(max_number + 1)
     number_list.reverse()
-    for number in number_list: 
+    for number in number_list:
         for card in filter(lambda x: x['description']['number'] == number, cards):
             figures_list.extend(card['figures'])
     #print figures_list
@@ -92,7 +92,7 @@ def classifier(cards, contours, figure_moments):
     #print centers
     # EM clustering
     n = len(clusters)
-    if n > set_number: 
+    if n > set_number:
         n = set_number
         centers = range(0, set_number)
         centers = map(lambda x: x * (1.0 / (set_number - 1)), centers)
@@ -105,13 +105,13 @@ def classifier(cards, contours, figure_moments):
         figure = {'id': figure_id, 'symbols': {}}
         if em.isTrained:
             (dummy, emmocm) = em.predict(np.array(figure_moments[figure_id]))
-            measures = list(emmocm[0])        
+            measures = list(emmocm[0])       
         else:
-            measures = mocm(figure_moments[figure_id], clusters, figure_moments)     
+            measures = mocm(figure_moments[figure_id], clusters, figure_moments)    
         symbols = {}
         for symbol in symbol_list:
             symbols[symbol] = measures[symbol]
-        figure['symbols'] = symbols   
+        figure['symbols'] = symbols  
         figures.append(figure)
     #print figures
     Classify.set_feature(cards, figures, symbol_list)

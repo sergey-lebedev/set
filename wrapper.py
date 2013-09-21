@@ -25,7 +25,7 @@ cv2.moveWindow('experiment', 100, 100)
 first_anchor = None
 second_anchor = None
 box_drawing = False
-box = ((-1, -1), (0, 0))  
+box = ((-1, -1), (0, 0))
 
 def draw_box(image, first, second):
     cv2.rectangle(image, first, second, (0, 255, 0))

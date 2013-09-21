@@ -39,7 +39,7 @@ def prob(hist, em, cluster_num):
 def feature_detector(graph, cards, image, contours):
     figures = {}
     for card in cards:
-        card_id = int(card['id'])
+        card_id = int(card.id)
         ((h, background_lightness, s), background_subimage, mask) = plot_intercontour_hist(image, card_id, contours, graph, False)
         image_name = '%d-%d: '%(card_id, card_id)
         #cv2.imshow(image_name, background_subimage)
@@ -49,7 +49,7 @@ def feature_detector(graph, cards, image, contours):
         #print cb0
         #print background_subimage
         result = []
-        for figure_id in card['figures']:
+        for figure_id in card.figures:
             if DEBUG: print 'figure_id: ', figure_id
             figure_outer_contour_id = int(figure_id)
             figure_inner_contour_id = int(graph.successors(figure_id)[0])
@@ -93,7 +93,7 @@ def feature_detector(graph, cards, image, contours):
             em.trainE(np.array(mix([lightness])), np.array(means))
             if DEBUG: print em.getMat('means')
             #print em.getMat('covs')
-            if DEBUG: print em.getMat('weights')        
+            if DEBUG: print em.getMat('weights') 
             p =  (ca - min(cb, cc)) / abs(cb - cc)
             #(dummy, check) = em.predict(np.array(cb))
             #check = list(check[0])
@@ -119,7 +119,7 @@ def classifier(cards, figures):
         values.append(figures[figure]['shadings'])
     values.sort()
     if DEBUG: print values
-    #clusters = hierarchy_group(figures)   
+    #clusters = hierarchy_group(figures)
     shading_list = range(len(clusters))
     Classify.set_feature(cards, figures, shading_list)
     return cards

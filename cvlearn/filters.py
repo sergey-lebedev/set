@@ -75,7 +75,7 @@ def balance(image, ax, bx, ay, by, az, bz):
         layer *= kernel
         layers[i] = layer
     copy = cv2.merge(layers)
-    return copy 
+    return copy
 
 def chromatic_adaptation(image):
     return simplest_color_balance(image, 1.5, 1.5)
@@ -133,12 +133,12 @@ def cv_convolution(image, b):
     c = cv.CreateMat(image.shape[0] + d - 1, image.shape[1] + d - 1, cv.CV_8U)
     # getting gaussian dft
     dft_b = cv.CreateMat(dft_m, dft_n, cv.CV_64F)
-    #   
+    #
     tmp = cv.GetSubRect(dft_b, (0, 0, b.shape[1], b.shape[0]))
     cv.Copy(cv.fromarray(b), tmp)
     tmp = cv.GetSubRect(dft_b, (b.shape[1], 0, dft_b.cols - b.shape[1], b.shape[0]))
     cv.Zero(tmp)
-    #   
+    #
     cv.DFT(dft_b, dft_b, cv.CV_DXT_FORWARD, b.shape[0])
     # getting layers dft
     dfts = []
@@ -213,7 +213,7 @@ def cv2_deconvolution(image, b):
         a = np.array(channel, dtype='float64')
         dft_a = np.zeros((dft_m, dft_n), dtype='float64')
         dft_a[:a.shape[0], :a.shape[1]] = a
-        print 'deconv' 
+        print 'deconv'
         dft_a = cv2.dft(dft_a, flags=cv2.DFT_COMPLEX_OUTPUT)
         dft_a = cv2.mulSpectrums(dft_a, ipsf, 0)
         print dft_a

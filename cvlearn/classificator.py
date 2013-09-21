@@ -16,7 +16,7 @@ class Classificator():
     def mocm(self, element, clusters, values):
         measures = []
         for cluster in clusters:
-            measure = distance(element, cluster_center(cluster, values))    
+            measure = distance(element, cluster_center(cluster, values))
             measures.append(measure)
         #print measures
         summ = sum(measures)
@@ -33,7 +33,7 @@ class Classificator():
         # card feature detector
         features_name = feature_name  + 's'
         for card in cards:
-            figure_list = card['figures']
+            figure_list = card.figures
             card_features = dict([(i, 0) for i in feature_list])
             #print card_features
             for figure_id in figure_list:
@@ -47,8 +47,8 @@ class Classificator():
             cfv = card_features.values()
             card_feature = card_features.keys()[cfv.index(max(cfv))]
             #print card_feature
-            card['description'][feature_name] = card_feature
-            card['description']['veracity'] *= max(cfv)
+            card.description[feature_name] = card_feature
+            card.description['veracity'] *= max(cfv)
             #print card['description']['veracity']
 
 class ColorClassificator(Classificator):
@@ -99,7 +99,7 @@ class ShadingClassificator(Classificator):
 
 class SymbolClassificator(Classificator):
     def distance(self, a, b):
-        result = abs(a - b)    
+        result = abs(a - b)
         return result
 
     def cluster_center(self, cluster, values):

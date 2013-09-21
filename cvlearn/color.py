@@ -83,16 +83,16 @@ def feature_detector(cards, image, contours, graph):
     for card in cards:
         #print card
         # create hist dictionary
-        card['hist'] = {}
+        card.hist = {}
         # step no.1
-        outer_contour_id = int(card['id'])
+        outer_contour_id = int(card.id)
         ((h, l, s), subimage, mask) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
-        card['hist']['hue'] = h
-        card['hist']['lightness'] = l
-        card['hist']['saturation'] = s
+        card.hist['hue'] = h
+        card.hist['lightness'] = l
+        card.hist['saturation'] = s
         #cv2.imshow(str(outer_contour_id), subimage)
         #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'o')
-        figures_list = card['figures']
+        figures_list = card.figures
         for figure_id in figures_list:
             figure = {'id': figure_id, 'border': {}, 'inner': {}}
             #step no.2
@@ -118,9 +118,9 @@ def feature_detector(cards, image, contours, graph):
                     if mask[j][i] != 0:
                         value = lightness[j][i]
                         #print value
-                        #print 'card_lightness: ', card['hist']['lightness'][value]
-                        #print 'figure_lightness: ',figure['border']['lightness'][value]   
-                        if card['hist']['lightness'][value] > figure['border']['lightness'][value]:
+                        #print 'card_lightness: ', card.hist['lightness'][value]
+                        #print 'figure_lightness: ',figure['border']['lightness'][value]
+                        if card.hist['lightness'][value] > figure['border']['lightness'][value]:
                             figure_mask[j][i] = 0
             inverted_mask = cv2.bitwise_not(figure_mask)
             #cv2.imshow(image_name + '(u)', subimage)
@@ -132,10 +132,10 @@ def feature_detector(cards, image, contours, graph):
             (h, l, s) = plot_hist_hls(subimage, figure_mask, image_name, normalized=False)
             figure['inner']['hue'] = h
             figure['inner']['lightness'] = l
-            figure['inner']['saturation'] = s           
+            figure['inner']['saturation'] = s 
             figures.append(figure)
         # clear hist dictionary
-        card['hist'] = {}
+        card.hist = {}
     return figures
 
 def classifier(cards, figures):
@@ -162,7 +162,7 @@ def classifier(cards, figures):
         cv2.normalize(hist, hist, *params)
         #print hist
         color_hists.append(hist)
-        #c += 1       
+        #c += 1
         #plot_selected_hist(hist, str(c))
     for figure in figures:
         hist = figure['inner']['hue']

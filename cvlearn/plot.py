@@ -30,10 +30,10 @@ def plot_selected_hist(hist, image_name='', L=256, hist_type='polylines'):
     hist_image = np.zeros((height, L, 1))
     if hist_type == 'polylines':
         cv2.polylines(hist_image, [pts], False, WHITE)
-    else:            
+    else:
         for (x, y) in pts:
             cv2.line(hist_image, (x, y), (x, height), WHITE)
-    cv2.imshow(image_name, hist_image)      
+    cv2.imshow(image_name, hist_image)
 
 def plot_hist_hls(image, mask=None, image_name='', normalized=True):
     converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
@@ -51,7 +51,7 @@ def plot_hist_hls(image, mask=None, image_name='', normalized=True):
             params = (1, 0, cv2.NORM_L1)
             cv2.normalize(subhist, subhist, *params)
         subhists.append(subhist)
-    plot_selected_hist(subhists[0], image_name, L=L, hist_type='line')   
+    plot_selected_hist(subhists[0], image_name, L=L, hist_type='line')
     return subhists
 
 def plot_hist_xyz(image, mask=None, image_name='', normalized=True):
@@ -69,7 +69,7 @@ def plot_hist_xyz(image, mask=None, image_name='', normalized=True):
             params = (1, 0, cv2.NORM_L1)
             cv2.normalize(subhist, subhist, *params)
         subhists.append(subhist)
-        plot_selected_hist(subhist, image_name + ': ' + component)   
+        plot_selected_hist(subhist, image_name + ': ' + component)
     return subhists
 
 def plot_hist(image, mask=None, image_name='', hist_type='polylines'):
@@ -103,7 +103,7 @@ def plot_hist(image, mask=None, image_name='', hist_type='polylines'):
         pts = np.column_stack((bins, height - subhist))
         if hist_type == 'polylines':
             cv2.polylines(hist_image, [pts], False, color_dict[color])
-        else:            
+        else:
             for (x, y) in pts:
                 cv2.line(hist_image, (x, y), (x, height), color_dict[color])
     cv2.imshow('%s %s'%(image_name, color), hist_image)
@@ -143,7 +143,7 @@ def plot_color_triangle(image, mask):
     height = a
     width = int(math.ceil(2 * a / math.sqrt(3)))
     #print (width, height)
-    color_triangle = cv.CreateImage((width, height), cv.IPL_DEPTH_8U, 3)   
+    color_triangle = cv.CreateImage((width, height), cv.IPL_DEPTH_8U, 3)
     (image_width, image_height) = cv.GetSize(cv.fromarray(image))
     #print (image_width, image_height)
     rectangle = (((0, 0), (width, 0), (width, height), (0, height)), BLACK)
@@ -186,7 +186,7 @@ def plot_color_rectangle(image, mask):
     width = 180
     height = 256
     #print (width, height)
-    color_rectangle = cv.CreateImage((width, height), cv.IPL_DEPTH_8U, 3)   
+    color_rectangle = cv.CreateImage((width, height), cv.IPL_DEPTH_8U, 3)
     (image_width, image_height) = cv.GetSize(cv.fromarray(image))
     #print (image_width, image_height)
     rectangle = (((0, 0), (width, 0), (width, height), (0, height)), BLACK)

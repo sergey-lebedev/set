@@ -48,11 +48,11 @@ def feature_detector(image, graph, cards, contours):
         card.description['number'] = NUMBER
     # second pass for color detection
     #figures = shading.feature_detector(graph, cards, image, contours)
-    #cards = shading.classifier(cards, figures)
+    #shading.classifier(cards, figures)
     figures = symbol.feature_detector(cards, contours)
-    cards = symbol.classifier(cards, contours, figures)
+    symbol.classifier(cards, contours, figures)
     figures = color.feature_detector(cards, image, contours, graph)
-    cards = color.classifier(cards, figures)
+    color.classifier(cards)
     #print cards
     return cards
 
@@ -69,23 +69,23 @@ def refining(graph, cards, contours):
         refined_graph.add_edge([root, card_outer_contour_id])
         #print card_inner_contour_id
         refined_graph.add_edge([card_outer_contour_id, card_inner_contour_id])
-        for figure_outer_contour_id in card.figures:
+        for figure_outer_contour in card.figures:
             #print figure_outer_contour_id
-            pretenders = graph.successors(figure_outer_contour_id)
+            pretenders = graph.successors(figure_outer_contour.id)
             #print figure_inner_contour_id
             if pretenders:
                 link = map(lambda x: (cv2.contourArea(contours[int(x)]), x), pretenders)
                 link.sort(reverse = True)
                 figure_inner_contour_id = link[0][1]
-                refined_graph.add_edge([card_inner_contour_id, figure_outer_contour_id])
-                refined_graph.add_edge([figure_outer_contour_id, figure_inner_contour_id])
+                refined_graph.add_edge([card_inner_contour_id, figure_outer_contour.id])
+                refined_graph.add_edge([figure_outer_contour.id, figure_inner_contour_id])
             else:
-                cleaning_figures_list.append(figure_outer_contour_id)
+                cleaning_figures_list.append(figure_outer_contour.id)
         while cleaning_figures_list:
             figure_outer_contour_id = cleaning_figures_list.pop(0)
             card_id = cards.index(card)
             #print cards[card_id]['figures']
-            card.figures.remove(figure_outer_contour_id)
+            card.figures.remove([figure for figure in card.figures if figure.id == figure_outer_contour_id][0])
             #print cards[card_id]['figures']
             #print 'figure cleaned'
     return refined_graph
@@ -129,7 +129,6 @@ class Scene():
         return level
 
     def find_cards(self, graph):
-        cards = []
         (nodes_on_level, difference, figures) = Figures().find(graph)
         # two equal peaks
         level = self.two_equal_peaks_finder(difference)
@@ -148,12 +147,14 @@ class Scene():
         print '%d card(s) detected'%len(sequence)
         #print cards
         #print sequence
-        cards = []
+        self.cards = []
         for node in sequence:
-            card = Card(**{'id': node, 'figures': graph.successors(node)})
-            cards.append(card)
+            figures_list = []
+            for successor in graph.successors(node):
+                figures_list.append(Figure(**{'id': successor}))
+            card = Card(**{'id': node, 'figures': figures_list})
+            self.cards.append(card)
         #print cards
-        return cards
 
     def veracity(self, cards, ids):
         veracity = 1
@@ -165,33 +166,34 @@ class Scene():
 
     def analysis(self):
         figures = []
-        cards = self.find_cards(self.graph)
-        self.graph = refining(self.graph, cards, self.contours)
-        if DEBUG: plot_hierarchy_tree(self.graph, 'refined')
-        # chromatic adaptation
-        #plot_hist_xyz(self.image, image_name='before')
-        self.image = filters.chromatic_adaptation(self.image)
-        #plot_hist_xyz(self.image, image_name='after')
-        # drawing contours
-        self.draw_all_contours()
-        cards = feature_detector(self.image, self.graph, cards, self.contours)
-        playing_cards = [card.description for card in cards]
-        sets, card_ids = set.search_set(playing_cards)
-        #print sets
-        #print card_ids
-        pairs = zip(sets, card_ids)
-        self.info = []
-        for s, ids in pairs:
-            veracity = veracity(cards, ids)
-            info.append([veracity, ids, s])
-        contour_ids = []
-        if card_ids:
-            self.info = sorted(self.info, reverse=True)
-            for i, elem in enumerate(info):
-                self.info[i][1] = map(lambda x: int(cards[x]['id']), elem[1])
-        else:
-            print 'None'
-        for card in cards: print card.description
+        self.find_cards(self.graph)
+        if self.cards:
+            self.graph = refining(self.graph, self.cards, self.contours)
+            if DEBUG: plot_hierarchy_tree(self.graph, 'refined')
+            # chromatic adaptation
+            #plot_hist_xyz(self.image, image_name='before')
+            self.image = filters.chromatic_adaptation(self.image)
+            #plot_hist_xyz(self.image, image_name='after')
+            # drawing contours
+            self.draw_all_contours()
+            cards = feature_detector(self.image, self.graph, self.cards, self.contours)
+            playing_cards = [card.description for card in cards]
+            sets, card_ids = set.search_set(playing_cards)
+            #print sets
+            #print card_ids
+            pairs = zip(sets, card_ids)
+            self.info = []
+            for s, ids in pairs:
+                veracity = veracity(self.cards, ids)
+                info.append([veracity, ids, s])
+            contour_ids = []
+            if card_ids:
+                self.info = sorted(self.info, reverse=True)
+                for i, elem in enumerate(info):
+                    self.info[i][1] = map(lambda x: int(self.cards[x]['id']), elem[1])
+            else:
+                print 'None'
+            for card in self.cards: print card.description
 
     def draw_all_contours(self):
         copy = self.image.copy()

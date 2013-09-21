@@ -36,23 +36,23 @@ def feature_detector(cards, contours):
     # collecting figures
     for card in cards:
         #print 'card: ', card
-        for figure_id in card.figures:
+        for figure in card.figures:
             #print 'figure: ', figure
-            figure_outer_contour_id = int(figure_id)
+            figure_outer_contour_id = int(figure.id)
             figure_contours.append(figure_outer_contour_id)
             contour = contours[figure_outer_contour_id]
             #moments = cv2.moments(contours[figure_outer_contour_id])
             #moments = cv2.HuMoments(moments)
-            #figure_moments[figure_id] = moments
+            #figure_moments[figure.id] = moments
             square = cv2.contourArea(contour)
             if square != 0:
                 rect = cv2.minAreaRect(contour)
                 box = cv.BoxPoints(rect)
                 box = np.array([[np.int0(point)] for point in box])
                 min_rect_square = cv2.contourArea(box)
-                figure_moments[figure_id] = (min_rect_square - square) / square
+                figure_moments[figure.id] = (min_rect_square - square) / square
             else:
-                figure_moments[figure_id] = 0
+                figure_moments[figure.id] = 0
     n = len(figure_contours)
     # adjacency matrix
     similarity_matrix = {}
@@ -73,7 +73,6 @@ def feature_detector(cards, contours):
     return figure_moments
 
 def classifier(cards, contours, figure_moments):
-    figures = []
     figures_list = []
     metric_type = cv.CV_CONTOURS_MATCH_I2
     max_number = max(map(lambda x: x.description['number'], cards))
@@ -82,9 +81,8 @@ def classifier(cards, contours, figure_moments):
     for number in number_list:
         for card in filter(lambda x: x.description['number'] == number, cards):
             figures_list.extend(card.figures)
-    #print figures_list
     # clustering
-    clusters = forel(figures_list, figure_moments)
+    clusters = forel([figure.id for figure in figures_list], figure_moments)
     #print clusters
     values = figure_moments.values()
     #print values
@@ -101,18 +99,18 @@ def classifier(cards, contours, figure_moments):
     em.trainE(np.array(values), np.array(centers))
     # init symbols
     symbol_list = range(n)
-    for figure_id in figures_list:
-        figure = {'id': figure_id, 'symbols': {}}
+    figures = []
+    for figure in figures_list:
         if em.isTrained:
-            (dummy, emmocm) = em.predict(np.array(figure_moments[figure_id]))
+            (dummy, emmocm) = em.predict(np.array(figure_moments[figure.id]))
             measures = list(emmocm[0])
         else:
-            measures = mocm(figure_moments[figure_id], clusters, figure_moments)
+            measures = mocm(figure_moments[figure.id], clusters, figure_moments)
         symbols = {}
         for symbol in symbol_list:
             symbols[symbol] = measures[symbol]
-        figure['symbols'] = symbols
+        figure.description['symbols'] = symbols
         figures.append(figure)
     #print figures
-    Classify.set_feature(cards, figures, symbol_list)
+    Classify.set_feature(cards, symbol_list)
     return cards

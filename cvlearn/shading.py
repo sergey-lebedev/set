@@ -49,10 +49,10 @@ def feature_detector(graph, cards, image, contours):
         #print cb0
         #print background_subimage
         result = []
-        for figure_id in card.figures:
-            if DEBUG: print 'figure_id: ', figure_id
-            figure_outer_contour_id = int(figure_id)
-            figure_inner_contour_id = int(graph.successors(figure_id)[0])
+        for figure in card.figures:
+            if DEBUG: print 'figure.id: ', figure.id
+            figure_outer_contour_id = int(figure.id)
+            figure_inner_contour_id = int(graph.successors(figure.id)[0])
             ((h, contour_lightness, s), contour_subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph, False)
             image_name = '%d-%d: '%(card_id, figure_outer_contour_id)
             #cv2.imshow(image_name, contour_subimage)
@@ -99,7 +99,7 @@ def feature_detector(graph, cards, image, contours):
             #check = list(check[0])
             #if not check.index(max(check)): p.reverse()
             if DEBUG: print p
-            figures[figure_id] = {'shadings': p}
+            figure.description['shadings'] = p
     '''
     lb = 0.30
     ub = 0.93
@@ -110,16 +110,16 @@ def feature_detector(graph, cards, image, contours):
     elif result > ub:
         shading = 'solid'
     '''
-    return figures
+    #return figures
 
-def classifier(cards, figures):
+def classifier(cards):
     #print figures
     values = []
-    for figure in figures:
-        values.append(figures[figure]['shadings'])
+    for figure in cards.figures:
+        values.append(figure.description['shadings'])
     values.sort()
     if DEBUG: print values
     #clusters = hierarchy_group(figures)
     shading_list = range(len(clusters))
-    Classify.set_feature(cards, figures, shading_list)
+    Classify.set_feature(cards, shading_list)
     return cards

@@ -1,5 +1,8 @@
 class Figure():
     def __init__(self, *args, **kwargs):
+        self.id = kwargs['id']
+        self.border = {}
+        self.inner = {}
         self.description = {}
 
     def plot(self):
@@ -12,8 +15,11 @@ class Card():
         self.figures = kwargs['figures']
 
     def plot(self):
+        # plotting card specific
+        # plotting figure specific
         for figure in self.figures:
-            figure.plot()
+            #figure.plot()
+            pass
 
 class Figures():
     def find(self, graph):

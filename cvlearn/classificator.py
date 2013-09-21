@@ -29,19 +29,18 @@ class Classificator():
         #print measures
         return measures
 
-    def set_feature(self, cards, figures, feature_list, feature_name):
+    def set_feature(self, cards, feature_list, feature_name):
         # card feature detector
         features_name = feature_name  + 's'
         for card in cards:
-            figure_list = card.figures
             card_features = dict([(i, 0) for i in feature_list])
             #print card_features
-            for figure_id in figure_list:
-                figure = filter(lambda x: x['id'] == figure_id, figures)[0]
+            for figure in card.figures:
+                #figure_id  = filter(lambda x: x['id'] == figure_id, figures)[0]
                 #print figure
                 for feature in feature_list:
-                    if figure[features_name].has_key(feature):
-                       card_features[feature] += figure[features_name][feature]
+                    if figure.description[features_name].has_key(feature):
+                       card_features[feature] += figure.description[features_name][feature]
             card_features = self.normalize(card_features)
             #print card_features
             cfv = card_features.values()
@@ -80,8 +79,8 @@ class ColorClassificator(Classificator):
         center = reduce(lambda x, y: x + y, subhists)
         return center
 
-    def set_feature(self, cards, figures, feature_list):
-        Classificator.set_feature(self, cards, figures, feature_list, 'color')
+    def set_feature(self, cards, feature_list):
+        Classificator.set_feature(self, cards, feature_list, 'color')
 
 class ShadingClassificator(Classificator):
     def cluster_center(self, hist):
@@ -94,8 +93,8 @@ class ShadingClassificator(Classificator):
         #print center
         return center
 
-    def set_feature(self, cards, figures, feature_list):
-        Classificator.set_feature(self, cards, figures, feature_list, 'shading')
+    def set_feature(self, cards, feature_list):
+        Classificator.set_feature(self, cards, feature_list, 'shading')
 
 class SymbolClassificator(Classificator):
     def distance(self, a, b):
@@ -109,5 +108,5 @@ class SymbolClassificator(Classificator):
         center = accumulator / len(cluster)
         return center
 
-    def set_feature(self, cards, figures, feature_list):
-        Classificator.set_feature(self, cards, figures, feature_list, 'symbol')
+    def set_feature(self, cards, feature_list):
+        Classificator.set_feature(self, cards, feature_list, 'symbol')

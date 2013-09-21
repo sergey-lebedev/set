@@ -1,4 +1,5 @@
 import cv2
+from find import Figure
 import filters
 from plot import *
 import classificator
@@ -56,7 +57,7 @@ def forel(figures):
     sequence = set(range(len(figures)))
     #print sequence
     #print figures
-    hists = map(lambda x: x['inner']['hue'], figures)
+    hists = map(lambda x: x.inner['hue'], figures)
     clusters = []
     while sequence:
         #print 'seq: ', sequence
@@ -92,16 +93,14 @@ def feature_detector(cards, image, contours, graph):
         card.hist['saturation'] = s
         #cv2.imshow(str(outer_contour_id), subimage)
         #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'o')
-        figures_list = card.figures
-        for figure_id in figures_list:
-            figure = {'id': figure_id, 'border': {}, 'inner': {}}
+        for figure in card.figures:
             #step no.2
-            outer_contour_id = int(figure_id)
+            outer_contour_id = int(figure.id)
             ((h, l, s), subimage, mask) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
             if DEBUG: cv2.imshow(str(outer_contour_id), subimage)
-            figure['border']['hue'] = h
-            figure['border']['lightness'] = l
-            figure['border']['saturation'] = s
+            figure.border['hue'] = h
+            figure.border['lightness'] = l
+            figure.border['saturation'] = s
             ((h, l, s), subimage, mask, inverted_mask) = plot_inner_hist(image, outer_contour_id, contours)
             image_name = str(outer_contour_id)
             #cv2.imshow(image_name, subimage)
@@ -120,7 +119,7 @@ def feature_detector(cards, image, contours, graph):
                         #print value
                         #print 'card_lightness: ', card.hist['lightness'][value]
                         #print 'figure_lightness: ',figure['border']['lightness'][value]
-                        if card.hist['lightness'][value] > figure['border']['lightness'][value]:
+                        if card.hist['lightness'][value] > figure.border['lightness'][value]:
                             figure_mask[j][i] = 0
             inverted_mask = cv2.bitwise_not(figure_mask)
             #cv2.imshow(image_name + '(u)', subimage)
@@ -130,15 +129,16 @@ def feature_detector(cards, image, contours, graph):
             #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'p')
             #step no.4
             (h, l, s) = plot_hist_hls(subimage, figure_mask, image_name, normalized=False)
-            figure['inner']['hue'] = h
-            figure['inner']['lightness'] = l
-            figure['inner']['saturation'] = s 
-            figures.append(figure)
+            figure.inner['hue'] = h
+            figure.inner['lightness'] = l
+            figure.inner['saturation'] = s
+            figure.description['mask'] = figure_mask
+            #figures.append(figure)
         # clear hist dictionary
         card.hist = {}
-    return figures
+    #return figures
 
-def classifier(cards, figures):
+def classifier(cards):
     #step no.5
     #cluster hist
     #hists = map(lambda x: x['inner']['hue'], figures)
@@ -146,6 +146,9 @@ def classifier(cards, figures):
     #print 'common_hist: ', common_hist
     #for i, value in enumerate(common_hist): print i, value
     #clusters = forel(common_hist)
+    figures = []    
+    for card in cards:
+        figures.extend(card.figures)
     clusters = forel(figures)
     #elements = range(len(common_hist))
     #step no.6
@@ -165,7 +168,7 @@ def classifier(cards, figures):
         #c += 1
         #plot_selected_hist(hist, str(c))
     for figure in figures:
-        hist = figure['inner']['hue']
+        hist = figure.inner['hue']
         params = (1, 0, cv2.NORM_INF)
         cv2.normalize(hist, hist, *params)
         #plot_selected_hist(hist, 'fig: ' + figure['id'])
@@ -180,8 +183,8 @@ def classifier(cards, figures):
         #print colors
         #colors = normalize_colors(colors)
         #print colors
-        figure['colors'] = colors
+        figure.description['colors'] = colors
     #print figures
     # card color detector
-    Classify.set_feature(cards, figures, color_list)
+    Classify.set_feature(cards, color_list)
     return cards

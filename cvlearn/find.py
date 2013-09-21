@@ -18,8 +18,7 @@ class Card():
         # plotting card specific
         # plotting figure specific
         for figure in self.figures:
-            #figure.plot()
-            pass
+            figure.plot()
 
 class Figures():
     def find(self, graph):

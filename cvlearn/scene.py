@@ -213,3 +213,9 @@ class Scene():
         for index in self.indexes:
             cv2.drawContours(copy, self.contours, index, color, 2)
         cv2.imshow('highlighted', copy)
+
+    def plot(self):
+        copy = self.image.copy()
+        for card in self.cards:
+            card.plot()
+        cv2.imshow('scene', copy)

@@ -54,6 +54,7 @@ def mouse_callback(event, x, y, flags, image):
             #plot_hist_hls(subimage)
             scene = Scene(subimage)
             scene.analysis()
+            scene.plot()
             if scene.info:
                 scene.highlight_contours()
             first_anchor = None

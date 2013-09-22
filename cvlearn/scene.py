@@ -2,6 +2,7 @@ import cv
 import cv2
 import time
 import math
+import random
 import color
 import symbol
 import filters
@@ -219,3 +220,13 @@ class Scene():
         for card in self.cards:
             card.plot()
         cv2.imshow('scene', copy)
+
+    def colorize(self, number_of_features):
+        # HSL colorspace
+        colors = []
+        L_MAX = 180
+        step = L_MAX / number_of_features
+        shift = random.randint(0, L_MAX - 1)
+        for i in range(number_of_features):
+            color = (0, 0, (i*step + shift) % L_MAX)            
+        return colors

@@ -228,8 +228,10 @@ class Scene():
         return colors
 
     def plot(self, feature_type):
-        copy = self.image.copy()
+        image = self.image.copy()
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
         colors = self.colorize(feature_type)
         for card in self.cards:
-            card.plot(copy, colors, feature_type)
-        cv2.imshow('scene - ' + feature_type, copy)
+            card.plot(image, colors, feature_type)
+        image = cv2.cvtColor(image, cv2.COLOR_HLS2BGR)
+        cv2.imshow('scene - ' + feature_type, image)

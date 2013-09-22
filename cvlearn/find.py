@@ -8,6 +8,7 @@ class Figure():
         self.description = {}
 
     def plot(self, image, color):
+        #cv.Add(cv.fromarray(image), cv.fromarray(self.description['mask']))
         #cv.Set(cv.fromarray(image), color, cv.fromarray(self.description['mask']))
         pass
     

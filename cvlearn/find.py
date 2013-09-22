@@ -1,3 +1,5 @@
+import cv
+
 class Figure():
     def __init__(self, *args, **kwargs):
         self.id = kwargs['id']
@@ -5,20 +7,22 @@ class Figure():
         self.inner = {}
         self.description = {}
 
-    def plot(self):
+    def plot(self, image, color):
+        #cv.Set(cv.fromarray(image), color, cv.fromarray(self.description['mask']))
         pass
-
+    
 class Card():
     def __init__(self, *args, **kwargs):
         self.description = {}
         self.id = kwargs['id']
         self.figures = kwargs['figures']
 
-    def plot(self):
+    def plot(self, image, colors, feature_type):
         # plotting card specific
         # plotting figure specific
+        color = colors[self.description[feature_type]]
         for figure in self.figures:
-            figure.plot()
+            figure.plot(image, color)
 
 class Figures():
     def find(self, graph):
@@ -38,4 +42,3 @@ class Figures():
             difference.append(abs(left - right))
         figures = []
         return nodes_on_level, difference, figures
-

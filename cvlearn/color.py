@@ -187,4 +187,4 @@ def classifier(cards):
     #print figures
     # card color detector
     Classify.set_feature(cards, color_list)
-    return cards
+    return len(color_list)

@@ -228,5 +228,6 @@ class Scene():
         step = L_MAX / number_of_features
         shift = random.randint(0, L_MAX - 1)
         for i in range(number_of_features):
-            color = (0, 0, (i*step + shift) % L_MAX)            
+            color = (0, 0, (i*step + shift) % L_MAX)
+            colors.append(color)
         return colors

@@ -40,7 +40,7 @@ def feature_detector(graph, cards, image, contours):
     figures = {}
     for card in cards:
         card_id = int(card.id)
-        ((h, background_lightness, s), background_subimage, mask) = plot_intercontour_hist(image, card_id, contours, graph, False)
+        ((h, background_lightness, s), background_subimage, mask, x, y) = plot_intercontour_hist(image, card_id, contours, graph, False)
         image_name = '%d-%d: '%(card_id, card_id)
         #cv2.imshow(image_name, background_subimage)
         if DEBUG: plot_selected_hist(background_lightness, image_name)
@@ -53,14 +53,14 @@ def feature_detector(graph, cards, image, contours):
             if DEBUG: print 'figure.id: ', figure.id
             figure_outer_contour_id = int(figure.id)
             figure_inner_contour_id = int(graph.successors(figure.id)[0])
-            ((h, contour_lightness, s), contour_subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph, False)
+            ((h, contour_lightness, s), contour_subimage, mask, x, y) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph, False)
             image_name = '%d-%d: '%(card_id, figure_outer_contour_id)
             #cv2.imshow(image_name, contour_subimage)
             if DEBUG: plot_selected_hist(contour_lightness, image_name)
             #print contour_lightness
             cc0 = Classify.cluster_center(contour_lightness)
             #print cc0
-            ((h, lightness, s), subimage, mask) = plot_intercontour_hist(image, figure_inner_contour_id, contours, graph, False)
+            ((h, lightness, s), subimage, mask, x, y) = plot_intercontour_hist(image, figure_inner_contour_id, contours, graph, False)
             image_name = '%d-%d: '%(card_id, figure_inner_contour_id)
             #cv2.imshow(image_name, subimage)
             if DEBUG: plot_selected_hist(lightness, image_name)
@@ -113,13 +113,17 @@ def feature_detector(graph, cards, image, contours):
     #return figures
 
 def classifier(cards):
-    #print figures
     values = []
-    for figure in cards.figures:
-        values.append(figure.description['shadings'])
+    for card in cards:
+        for figure in card.figures:
+            values.append(figure.description['shadings'])
     values.sort()
     if DEBUG: print values
-    #clusters = hierarchy_group(figures)
+    # clustering
+    figures = []    
+    for card in cards:
+        figures.extend(card.figures)
+    clusters = hierarchy_group(figures)
     shading_list = range(len(clusters))
     Classify.set_feature(cards, shading_list)
     return len(shading_list)

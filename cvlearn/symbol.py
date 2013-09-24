@@ -53,8 +53,9 @@ def feature_detector(cards, contours):
                 figure_moments[figure.id] = (min_rect_square - square) / square
             else:
                 figure_moments[figure.id] = 0
-    n = len(figure_contours)
+    '''
     # adjacency matrix
+    n = len(figure_contours)
     similarity_matrix = {}
     metric_type = cv.CV_CONTOURS_MATCH_I2
     for i, ci in enumerate(figure_contours):
@@ -69,6 +70,7 @@ def feature_detector(cards, contours):
             similarity_matrix[(j, i)] = metric
     #print similarity_matrix
     #plot_heatmap(similarity_matrix, n)
+    '''
     #print figure_moments
     return figure_moments
 

@@ -58,7 +58,7 @@ class Scene():
             card.description['number'] = NUMBER
         # second pass for color detection
         #figures = shading.feature_detector(self.graph, self.cards, self.image, self.contours)
-        #self.number_of['shadings'] = shading.classifier(self.cards, figures)
+        #self.number_of['shadings'] = shading.classifier(self.cards)
         figures = symbol.feature_detector(self.cards, self.contours)
         self.number_of['symbols'] = symbol.classifier(self.cards, self.contours, figures)
         figures = color.feature_detector(self.cards, self.image, self.contours, self.graph)
@@ -178,6 +178,9 @@ class Scene():
             # drawing contours
             self.draw_all_contours()
             self.feature_detector()
+            self.plot('color')
+            self.plot('symbol')
+            #self.plot('shading')
             playing_cards = [card.description for card in self.cards]
             sets, card_ids = set.search_set(playing_cards)
             #print sets

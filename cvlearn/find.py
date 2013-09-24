@@ -8,10 +8,18 @@ class Figure():
         self.description = {}
 
     def plot(self, image, color):
-        #cv.Add(cv.fromarray(image), cv.fromarray(self.description['mask']))
-        #cv.Set(cv.fromarray(image), color, cv.fromarray(self.description['mask']))
-        pass
-    
+        mask = cv.fromarray(self.description['mask'])
+        background = cv.fromarray(image.copy())
+        #print cv.GetSize(background)
+        (width, height) = cv.GetSize(mask)
+        #cv.Set(background, color)
+        x = self.description['offset_x']
+        y = self.description['offset_y']
+        cv_image = cv.GetImage(cv.fromarray(image))
+        cv.SetImageROI(cv_image, (x, y, width, height))
+        cv.Set(cv_image, color, mask)
+        cv.ResetImageROI(cv_image)
+
 class Card():
     def __init__(self, *args, **kwargs):
         self.description = {}

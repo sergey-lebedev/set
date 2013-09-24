@@ -223,8 +223,9 @@ class Scene():
         step = H_MAX / number_of_features
         shift = random.randint(0, H_MAX - 1)
         for i in range(number_of_features):
-            color = (0, 0, (i*step + shift) % H_MAX)
+            color = ((i*step + shift) % H_MAX, 128, 255)
             colors.append(color)
+        print colors
         return colors
 
     def plot(self, feature_type):

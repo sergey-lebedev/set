@@ -87,7 +87,7 @@ def feature_detector(cards, image, contours, graph):
         card.hist = {}
         # step no.1
         outer_contour_id = int(card.id)
-        ((h, l, s), subimage, mask) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
+        ((h, l, s), subimage, mask, x, y) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
         card.hist['hue'] = h
         card.hist['lightness'] = l
         card.hist['saturation'] = s
@@ -96,11 +96,13 @@ def feature_detector(cards, image, contours, graph):
         for figure in card.figures:
             #step no.2
             outer_contour_id = int(figure.id)
-            ((h, l, s), subimage, mask) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
+            ((h, l, s), subimage, mask, x, y) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
             if DEBUG: cv2.imshow(str(outer_contour_id), subimage)
             figure.border['hue'] = h
             figure.border['lightness'] = l
             figure.border['saturation'] = s
+            figure.description['offset_x'] = x
+            figure.description['offset_y'] = y            
             ((h, l, s), subimage, mask, inverted_mask) = plot_inner_hist(image, outer_contour_id, contours)
             image_name = str(outer_contour_id)
             #cv2.imshow(image_name, subimage)

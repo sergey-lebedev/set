@@ -259,7 +259,7 @@ def plot_intercontour_hist(image, outer_contour_id, contours, graph, normalized=
     #cv2.imshow(image_name, subimage)
     #subhists = plot_hist(subimage, mask, image_name)
     subhists = plot_hist_hls(subimage, mask, image_name, normalized)
-    return subhists, subimage, mask
+    return subhists, subimage, mask, x, y
 
 def plot_figures_hist(contours, hierarchy, image):
     (graph, nodes_on_level, difference) = find_figures(hierarchy)

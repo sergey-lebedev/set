@@ -96,7 +96,7 @@ def feature_detector(graph, cards, image, contours):
             em.trainE(np.array(mix([lightness])), np.array(means))
             if DEBUG: print em.getMat('means')
             #print em.getMat('covs')
-            if DEBUG: print em.getMat('weights') 
+            if DEBUG: print em.getMat('weights')
             p =  (ca - min(cb, cc)) / abs(cb - cc)
             #(dummy, check) = em.predict(np.array(cb))
             #check = list(check[0])
@@ -123,7 +123,7 @@ def classifier(cards):
     values.sort()
     if DEBUG: print values
     # clustering
-    figures = []    
+    figures = []
     for card in cards:
         figures.extend(card.figures)
     clusters = hierarchy_group(figures)

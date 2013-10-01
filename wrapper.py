@@ -22,6 +22,7 @@ filename = 'DSC03467_mini.JPG'
 image = cv2.imread('/'.join((images_dir, filename)))
 cv2.moveWindow('experiment', 100, 100)
 
+scene = None
 first_anchor = None
 second_anchor = None
 box_drawing = False
@@ -36,6 +37,7 @@ def mouse_callback(event, x, y, flags, image):
     global box_drawing
     global temp
     global box
+    global scene
     if event == cv2.EVENT_MOUSEMOVE:
         if box_drawing and first_anchor:
             box = (first_anchor, (x, y))
@@ -52,6 +54,7 @@ def mouse_callback(event, x, y, flags, image):
             subimage = get_subimage(image, *box)
             #cv2.imshow('subimage', subimage)
             #plot_hist_hls(subimage)
+            if scene: scene.clear()
             scene = Scene(subimage)
             scene.analysis()
             if scene.info:

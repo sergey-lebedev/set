@@ -19,8 +19,8 @@ def intercontour_gap_processing(image, contours, graph, nodes_on_level, level):
     for node in nodes_on_level[level]:
         figure_inner_contour_id = int(node)
         figure_outer_contour_id = int(graph.predecessors(node)[0])
-        (subhists, subimage, mask) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
-    return subimage, mask
+        (subhists, subimage, mask, winnames) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
+    return subimage, mask, winnames
 
 def card_processing(image, figure_outer_contour_id, contours, graph):
     # card background
@@ -28,6 +28,7 @@ def card_processing(image, figure_outer_contour_id, contours, graph):
     plot_intercontour_hist(image, card_inner_contour_id, contours, graph)
 
 def adaptive_threshold(image):
+    winnames = []
     result = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     result = cv2.medianBlur(result, 3)
     #result = cv2.equalizeHist(result)
@@ -47,6 +48,8 @@ class Scene():
         self.cards = []
         self.image = image
         self.number_of = {}
+        self.debug = {}
+        self.winnames = []
         self.find_all_contours()
         self.get_hierarchy_tree()
 
@@ -209,14 +212,18 @@ class Scene():
             rectangle = ((a, b), (a + c, b + d), WHITE)
             cv2.putText(copy, str(i), ((a + c), (b + d)), 1, 1, WHITE)
             cv2.rectangle(copy, *rectangle)
-        cv2.imshow('result', copy)
+        winname = 'result'
+        cv2.imshow(winname, copy)
+        self.winnames.append(winname)
 
     def highlight_contours(self):
         color = (0, 0, 255)
         copy = self.image.copy()
         for index in self.indexes:
             cv2.drawContours(copy, self.contours, index, color, 2)
-        cv2.imshow('highlighted', copy)
+        winname = 'highlighted'
+        cv2.imshow(winname, copy)
+        self.debug['winnames'].append(winname)
 
     def colorize(self, feature_type):
         number_of_features = self.number_of[feature_type + 's']
@@ -238,4 +245,23 @@ class Scene():
         for card in self.cards:
             card.plot(image, colors, feature_type)
         image = cv2.cvtColor(image, cv2.COLOR_HLS2BGR)
-        cv2.imshow('scene - ' + feature_type, image)
+        winname = 'scene - ' + feature_type
+        cv2.imshow(winname, image)
+        self.winnames.append(winname)
+
+    def clear(self):
+        print 'destructor'
+        for card in self.cards:
+            # card specific winnames
+            print 'card.winnames: ', card.winnames
+            for winname in card.winnames:
+                cv2.destroyWindow(winname)
+            for figure in card.figures:
+                # figure specific winnames
+                print 'figure.winnames: ', figure.winnames
+                for winname in figure.winnames:
+                    cv2.destroyWindow(winname)
+        print self.winnames
+        # scene specific winnames
+        for winname in self.winnames:
+            cv2.destroyWindow(winname)

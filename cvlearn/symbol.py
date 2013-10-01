@@ -31,6 +31,7 @@ def forel(elements, values):
     return clusters
 
 def feature_detector(cards, contours):
+    allwinnames = []
     figure_contours = []
     figure_moments = {}
     # collecting figures

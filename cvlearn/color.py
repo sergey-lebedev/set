@@ -87,23 +87,26 @@ def feature_detector(cards, image, contours, graph):
         card.hist = {}
         # step no.1
         outer_contour_id = int(card.id)
-        ((h, l, s), subimage, mask, x, y) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
+        ((h, l, s), subimage, mask, x, y, winnames) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
         card.hist['hue'] = h
         card.hist['lightness'] = l
         card.hist['saturation'] = s
+        card.winnames.extend(winnames)
         #cv2.imshow(str(outer_contour_id), subimage)
         #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'o')
         for figure in card.figures:
             #step no.2
             outer_contour_id = int(figure.id)
-            ((h, l, s), subimage, mask, x, y) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
+            ((h, l, s), subimage, mask, x, y, winnames) = plot_intercontour_hist(image, outer_contour_id, contours, graph)
             if DEBUG: cv2.imshow(str(outer_contour_id), subimage)
             figure.border['hue'] = h
             figure.border['lightness'] = l
             figure.border['saturation'] = s
             figure.description['offset_x'] = x
-            figure.description['offset_y'] = y            
-            ((h, l, s), subimage, mask, inverted_mask) = plot_inner_hist(image, outer_contour_id, contours)
+            figure.description['offset_y'] = y
+            figure.winnames.extend(winnames)
+            ((h, l, s), subimage, mask, inverted_mask, winnames) = plot_inner_hist(image, outer_contour_id, contours)
+            figure.winnames.extend(winnames)
             image_name = str(outer_contour_id)
             #cv2.imshow(image_name, subimage)
             #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'b')
@@ -130,15 +133,17 @@ def feature_detector(cards, image, contours, graph):
             #cv2.imshow(image_name + '(full)', subimage)
             #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'p')
             #step no.4
-            (h, l, s) = plot_hist_hls(subimage, figure_mask, image_name, normalized=False)
+            ((h, l, s), winnames) = plot_hist_hls(subimage, figure_mask, image_name, normalized=False)
             figure.inner['hue'] = h
             figure.inner['lightness'] = l
             figure.inner['saturation'] = s
             figure.description['mask'] = figure_mask
+            figure.winnames.extend(winnames)
+            #print 'allwinnames: ', allwinnames
             #figures.append(figure)
         # clear hist dictionary
         card.hist = {}
-    #return figures
+    return figures
 
 def classifier(cards):
     #step no.5
@@ -148,7 +153,7 @@ def classifier(cards):
     #print 'common_hist: ', common_hist
     #for i, value in enumerate(common_hist): print i, value
     #clusters = forel(common_hist)
-    figures = []    
+    figures = []
     for card in cards:
         figures.extend(card.figures)
     clusters = forel(figures)

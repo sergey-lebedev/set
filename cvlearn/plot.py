@@ -34,6 +34,7 @@ def plot_selected_hist(hist, image_name='', L=256, hist_type='polylines'):
         for (x, y) in pts:
             cv2.line(hist_image, (x, y), (x, height), WHITE)
     cv2.imshow(image_name, hist_image)
+    return image_name
 
 def plot_hist_hls(image, mask=None, image_name='', normalized=True):
     converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
@@ -41,8 +42,11 @@ def plot_hist_hls(image, mask=None, image_name='', normalized=True):
     counts = (L, 256, 256)
     #components = {'h': hue, 's': saturation, 'l': lightness}
     components = {'h': hue}
+    winnames = []
     for name in components:
-        cv2.imshow(image_name + ' ' + name, components[name])
+        winname = image_name + ' ' + name
+        winnames.append(winname)
+        cv2.imshow(winname, components[name])
     subhists = []
     for i, slice in enumerate((hue, lightness, saturation)):
         subhist = cv2.calcHist([slice], [0], mask, [counts[i]], [0, counts[i] - 1])
@@ -52,7 +56,8 @@ def plot_hist_hls(image, mask=None, image_name='', normalized=True):
             cv2.normalize(subhist, subhist, *params)
         subhists.append(subhist)
     plot_selected_hist(subhists[0], image_name, L=L, hist_type='line')
-    return subhists
+    winnames.append(image_name)
+    return subhists, winnames
 
 def plot_hist_xyz(image, mask=None, image_name='', normalized=True):
     converted_image = cv2.cvtColor(image, cv2.COLOR_BGR2XYZ)
@@ -63,14 +68,17 @@ def plot_hist_xyz(image, mask=None, image_name='', normalized=True):
     #for name in components:
     #    cv2.imshow(image_name + ' ' + name, components[name])
     subhists = []
+    winnames = []
     for i, component in enumerate(components):
         subhist = cv2.calcHist([components[component]], [0], mask, [counts[i]], [0, counts[i] - 1])
         if normalized:
             params = (1, 0, cv2.NORM_L1)
             cv2.normalize(subhist, subhist, *params)
         subhists.append(subhist)
-        plot_selected_hist(subhist, image_name + ': ' + component)
-    return subhists
+        winname = image_name + ': ' + component
+        plot_selected_hist(subhist, winname)
+        winnames.append(winname)
+    return subhists, winnames
 
 def plot_hist(image, mask=None, image_name='', hist_type='polylines'):
     bins = np.arange(256) #.reshape(256,1)
@@ -81,6 +89,7 @@ def plot_hist(image, mask=None, image_name='', hist_type='polylines'):
         'g': (0, 255, 0),
         'r': (0, 0, 255)
     }
+    winnames = []
     l1_norm = []
     subhists = []
     height = 300
@@ -106,12 +115,14 @@ def plot_hist(image, mask=None, image_name='', hist_type='polylines'):
         else:
             for (x, y) in pts:
                 cv2.line(hist_image, (x, y), (x, height), color_dict[color])
-    cv2.imshow('%s %s'%(image_name, color), hist_image)
+    winname = '%s %s'%(image_name, color)
+    winnames.append(winname)
+    cv2.imshow(winname, hist_image)
     #color_triangle = plot_color_triangle(image, mask)
     #cv.ShowImage('%s color triangle: '%image_name, color_triangle)
     #color_rectangle = plot_color_rectangle(image, mask)
     #cv.ShowImage('%s color triangle: '%image_name, color_rectangle)
-    return subhists
+    return subhists, winnames
 
 def plot_hierarchy_tree(graph, image_name='graph'):
     format = 'png'
@@ -123,6 +134,7 @@ def plot_hierarchy_tree(graph, image_name='graph'):
     scale_factor = min(1, scale_factor)
     resized_graph = cv2.resize(graph_image, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LANCZOS4)
     cv2.imshow(image_name, resized_graph)
+    return image_name
 
 def plot_heatmap(similarity_matrix, n):
     if n != 0:
@@ -230,8 +242,8 @@ def plot_inner_hist(image, outer_contour_id, contours):
     image_name = '%d'%(outer_contour_id)
     #cv2.imshow(image_name, subimage)
     #subhists = plot_hist(subimage, mask, image_name)
-    subhists = plot_hist_hls(subimage, mask, image_name)
-    return subhists, subimage, mask, inverted_mask
+    (subhists, winnames) = plot_hist_hls(subimage, mask, image_name)
+    return subhists, subimage, mask, inverted_mask, winnames
 
 def plot_intercontour_hist(image, outer_contour_id, contours, graph, normalized=True):
     outer_contour = contours[outer_contour_id]
@@ -254,12 +266,13 @@ def plot_intercontour_hist(image, outer_contour_id, contours, graph, normalized=
                 inverted_mask[j][i] = 0
     mask = cv2.bitwise_not(inverted_mask)
     cv.Set(cv.fromarray(subimage), WHITE, cv.fromarray(inverted_mask))
-    inner_contour_id = str(inner_contours)
-    image_name = '%d-%s'%(outer_contour_id, inner_contours)
+    inner_contour_id = len(str(inner_contours))
+    print 'inner contour id: ', inner_contour_id
+    image_name = '%d-%s'%(outer_contour_id, inner_contour_id)
     #cv2.imshow(image_name, subimage)
     #subhists = plot_hist(subimage, mask, image_name)
-    subhists = plot_hist_hls(subimage, mask, image_name, normalized)
-    return subhists, subimage, mask, x, y
+    (subhists, winnames) = plot_hist_hls(subimage, mask, image_name, normalized)
+    return subhists, subimage, mask, x, y, winnames
 
 def plot_figures_hist(contours, hierarchy, image):
     (graph, nodes_on_level, difference) = find_figures(hierarchy)
@@ -267,5 +280,5 @@ def plot_figures_hist(contours, hierarchy, image):
     level = two_equal_peaks_finder(difference)
     if level:
         # intercontour gap
-        subimage, mask = intercontour_gap_processing(image, contours, graph, nodes_on_level, level)
+        (subimage, mask) = intercontour_gap_processing(image, contours, graph, nodes_on_level, level)
     return subimage, mask

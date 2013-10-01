@@ -6,6 +6,7 @@ class Figure():
         self.border = {}
         self.inner = {}
         self.description = {}
+        self.winnames = []
 
     def plot(self, image, color):
         mask = cv.fromarray(self.description['mask'])
@@ -25,6 +26,7 @@ class Card():
         self.description = {}
         self.id = kwargs['id']
         self.figures = kwargs['figures']
+        self.winnames = []
 
     def plot(self, image, colors, feature_type):
         # plotting card specific

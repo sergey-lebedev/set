@@ -2,10 +2,13 @@
 Drawing cards
 '''
 import pygame
-from patterns import *
+from patterns import FIGURES, DRAWINGS, COLORS
 #from math import pi
 
 def draw_card(card, screen, position, is_selected):
+    '''
+    Card drawing draw_card(card, screen, position, is_selected)
+    '''
     images_dir = 'images'
     filename = '_'.join((card['symbol'], card['shading'], card['color'],))
     fullname = '%s/%s.png' % (images_dir, filename)
@@ -15,7 +18,7 @@ def draw_card(card, screen, position, is_selected):
     width = 90
     height = 117
     card_size = (width, height)
-    card_center = map(lambda (x): x/2 , card_size)
+    card_center = map(lambda (x): x/2, card_size)
 
     # selection
     frame = pygame.surface.Surface(card_size)
@@ -38,10 +41,12 @@ def draw_card(card, screen, position, is_selected):
         horizontal_rectangle = \
         pygame.Rect(dx, dy + b, width - 2*dx, height - 2*(dy + b))
         rects = [vertical_rectangle, horizontal_rectangle]
-        for rect in rects: pygame.draw.rect(frame, color, rect)
+        for rect in rects: 
+            pygame.draw.rect(frame, color, rect)
         ellipses = [left_up_ellipse, right_up_ellipse, 
                     left_down_ellipse, right_down_ellipse]
-        for ellipse in ellipses: pygame.draw.ellipse(frame, color, ellipse)
+        for ellipse in ellipses: 
+            pygame.draw.ellipse(frame, color, ellipse)
         # border not presented cause pygame draws awful arcs
         '''
         border_color = (0, 0, 0)
@@ -74,6 +79,9 @@ def draw_card(card, screen, position, is_selected):
         offset += delta
 
 def visualize(cards, field_state):
+    '''
+    Graphical visualisation visualize(cards, field_state)
+    '''
     # pygame screen
     width = 90
     height = 117
@@ -99,17 +107,20 @@ def visualize(cards, field_state):
     return field_state
 
 def draw_card_text(card):
+    '''
+    Drawing cards in console draw_card_text(card)
+    '''
     card_width = 5
-    card_height = 1
+    #card_height = 1
     delta = 2
     vocabulary = {'one': 1, 'two': 2, 'three': 3}
     n = vocabulary[card['number']]
     offset = -(delta * (n - 1))/2
     right_offset = left_offset = (card_width - n - (delta - 1)*(n - 1))/2
-    center = card_width/2
+    #center = card_width/2
     card_text = DRAWINGS['blank']*left_offset
     for i in range(n):
-        position = center + offset
+        #position = center + offset
         figure = '_'.join((card['shading'], card['symbol'],))
         figure = figure.replace('oval', 'square')
         figure = figure.replace('squiggle', 'circle')
@@ -124,6 +135,9 @@ def draw_card_text(card):
     return card_text
 
 def draw_set_text(node):
+    '''
+    Drawing sets in console draw_set_text(node)
+    '''   
     card_width = 5
     header = DRAWINGS['light_arc_down_and_right'] + \
              DRAWINGS['light_horizontal']*card_width + \
@@ -132,7 +146,8 @@ def draw_set_text(node):
              DRAWINGS['light_horizontal']*card_width + \
              DRAWINGS['light_arc_up_and_left']
     separator = DRAWINGS['light_vertical_and_right'] + \
-                DRAWINGS['light_horizontal']*card_width + DRAWINGS['light_vertical_and_left']
+                DRAWINGS['light_horizontal']*card_width + \
+                DRAWINGS['light_vertical_and_left']
     set_text = header + '\n'
     for card in node[:-1]:
         card_text = draw_card_text(card)
@@ -148,14 +163,19 @@ def draw_set_text(node):
     return set_text
 
 def ordered_sets(sets):
+    '''
+    Ordering sets ordered_sets(sets)
+    '''
     texts = [draw_set_text(node).split('\n') for node in sets]
     horisontal_space = ' '
     limit = 10
     counter = 0
     strings = None
-    if sets: strings = ''
+    if sets: 
+        strings = ''
     while counter < len(sets):
-        string_list = [horisontal_space.join(string) for string in zip(*texts[counter:counter + limit])]
+        string_list = [horisontal_space.join(string) \
+                      for string in zip(*texts[counter:counter + limit])]
         limited_strings = '\n'.join(string_list)
         strings = '\n'.join((strings, limited_strings))
         counter += limit
@@ -163,6 +183,9 @@ def ordered_sets(sets):
     return strings
 
 def draw_card_slot(card):
+    '''
+    Drawing slot that contains figures draw_card_slot(card)
+    '''
     card_width = 5
     header = DRAWINGS['light_arc_down_and_right'] + \
              DRAWINGS['light_horizontal']*card_width + \
@@ -177,6 +200,9 @@ def draw_card_slot(card):
     return card_slot_text
 
 def draw_ordered_slots(cards):
+    '''
+    Drawing ordered slots draw_ordered_slots(cards)
+    '''
     rows = 3
     cols = len(cards) / rows
     slots_text = ''
@@ -185,10 +211,13 @@ def draw_ordered_slots(cards):
     while counter < cols:
         limited_slots_text = ''
         for i in range(rows):
-            cards_slice = cards[i*cols + counter: i*cols + min(counter + limit, cols)]
-            slots_texts = [draw_card_slot(card).split('\n') for card in cards_slice]
+            cards_slice = \
+                cards[i*cols + counter: i*cols + min(counter + limit, cols)]
+            slots_texts = \
+                [draw_card_slot(card).split('\n') for card in cards_slice]
             horisontal_space = ' '
-            slots_list = [horisontal_space.join(string) for string in zip(*slots_texts)]
+            slots_list = \
+                [horisontal_space.join(string) for string in zip(*slots_texts)]
             limited_slots_text += '\n'.join(slots_list) + '\n'
         slots_text += limited_slots_text
         counter += limit

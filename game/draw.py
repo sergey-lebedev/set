@@ -1,6 +1,9 @@
+'''
+Drawing cards
+'''
 import pygame
 from patterns import *
-from math import pi
+#from math import pi
 
 def draw_card(card, screen, position, is_selected):
     images_dir = 'images'
@@ -30,11 +33,14 @@ def draw_card(card, screen, position, is_selected):
         right_up_ellipse = (width - (2*a + dx), dy, 2*a, 2*b)
         left_down_ellipse = (dx, height - (2*b + dy), 2*a, 2*b)
         right_down_ellipse = (width - (2*a + dx), height - (2*b + dy), 2*a, 2*b)
-        vertical_rectangle = pygame.Rect(dx + a, dy, width - 2*(dx + a), height - 2*dy)
-        horizontal_rectangle = pygame.Rect(dx, dy + b, width - 2*dx, height - 2*(dy + b))
+        vertical_rectangle = \
+        pygame.Rect(dx + a, dy, width - 2*(dx + a), height - 2*dy)
+        horizontal_rectangle = \
+        pygame.Rect(dx, dy + b, width - 2*dx, height - 2*(dy + b))
         rects = [vertical_rectangle, horizontal_rectangle]
         for rect in rects: pygame.draw.rect(frame, color, rect)
-        ellipses = [left_up_ellipse, right_up_ellipse, left_down_ellipse, right_down_ellipse]
+        ellipses = [left_up_ellipse, right_up_ellipse, 
+                    left_down_ellipse, right_down_ellipse]
         for ellipse in ellipses: pygame.draw.ellipse(frame, color, ellipse)
         # border not presented cause pygame draws awful arcs
         '''
@@ -62,7 +68,8 @@ def draw_card(card, screen, position, is_selected):
     (x, y) = position
     center = (card_center[0] - size[0]/2 + x, card_center[1] - size[1]/2 + y)
     for i in range(n):
-        position = (center[0], center[1] + offset, center[0] + size[0], center[1] + size[1] + offset)
+        position = (center[0], center[1] + offset, 
+                    center[0] + size[0], center[1] + size[1] + offset)
         screen.blit(simple_image, position)
         offset += delta
 
@@ -100,33 +107,42 @@ def draw_card_text(card):
     offset = -(delta * (n - 1))/2
     right_offset = left_offset = (card_width - n - (delta - 1)*(n - 1))/2
     center = card_width/2
-    card_text = drawings['blank']*left_offset
+    card_text = DRAWINGS['blank']*left_offset
     for i in range(n):
         position = center + offset
         figure = '_'.join((card['shading'], card['symbol'],))
         figure = figure.replace('oval', 'square')
         figure = figure.replace('squiggle', 'circle')
-        figure_text = colors[card['color']] + figures[figure] + u'\033[00m'
+        figure_text = COLORS[card['color']] + FIGURES[figure] + u'\033[00m'
         card_text += figure_text
         if i != n - 1:
-            card_text += drawings['blank']*(delta - 1)
+            card_text += DRAWINGS['blank']*(delta - 1)
         else:
-            card_text += drawings['blank']*right_offset
+            card_text += DRAWINGS['blank']*right_offset
         offset += delta
     #print card_text
     return card_text
 
 def draw_set_text(node):
     card_width = 5
-    header = drawings['light_arc_down_and_right'] + drawings['light_horizontal']*card_width + drawings['light_arc_down_and_left']
-    footer = drawings['light_arc_up_and_right'] + drawings['light_horizontal']*card_width + drawings['light_arc_up_and_left']
-    separator = drawings['light_vertical_and_right'] + drawings['light_horizontal']*card_width + drawings['light_vertical_and_left']
+    header = DRAWINGS['light_arc_down_and_right'] + \
+             DRAWINGS['light_horizontal']*card_width + \
+             DRAWINGS['light_arc_down_and_left']
+    footer = DRAWINGS['light_arc_up_and_right'] + \
+             DRAWINGS['light_horizontal']*card_width + \
+             DRAWINGS['light_arc_up_and_left']
+    separator = DRAWINGS['light_vertical_and_right'] + \
+                DRAWINGS['light_horizontal']*card_width + DRAWINGS['light_vertical_and_left']
     set_text = header + '\n'
     for card in node[:-1]:
         card_text = draw_card_text(card)
-        set_text += drawings['light_vertical'] + card_text + drawings['light_vertical'] + '\n'
+        set_text += DRAWINGS['light_vertical'] + \
+                    card_text + \
+                    DRAWINGS['light_vertical'] + '\n'
         set_text += '%s\n' % separator
-    set_text += drawings['light_vertical'] + draw_card_text(node[-1]) + drawings['light_vertical'] + '\n'
+    set_text += DRAWINGS['light_vertical'] + \
+                draw_card_text(node[-1]) + \
+                DRAWINGS['light_vertical'] + '\n'
     set_text += '%s' % footer
     #print set_text
     return set_text
@@ -148,9 +164,13 @@ def ordered_sets(sets):
 
 def draw_card_slot(card):
     card_width = 5
-    header = drawings['light_arc_down_and_right'] + drawings['light_horizontal']*card_width + drawings['light_arc_down_and_left']
-    footer = drawings['light_arc_up_and_right'] + drawings['light_horizontal']*card_width + drawings['light_arc_up_and_left']
-    separator = drawings['light_vertical']
+    header = DRAWINGS['light_arc_down_and_right'] + \
+             DRAWINGS['light_horizontal']*card_width + \
+             DRAWINGS['light_arc_down_and_left']
+    footer = DRAWINGS['light_arc_up_and_right'] + \
+             DRAWINGS['light_horizontal']*card_width + \
+             DRAWINGS['light_arc_up_and_left']
+    separator = DRAWINGS['light_vertical']
     body = '%s%s%s' % (separator, draw_card_text(card), separator)
     card_slot_text = '\n'.join((header, body, footer))
     #print card_slot_text

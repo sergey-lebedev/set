@@ -14,6 +14,9 @@ feature_list = (color_list, symbol_list, shading_list, number_list)
 features = ('color', 'symbol', 'shading', 'number')
 
 def deck_generator():
+    '''
+    Deck generator deck_generator()
+    '''
     deck = []
     base = [range(len(feature)) for feature in feature_list]
     tally_counter = itertools.product(*base)
@@ -24,6 +27,9 @@ def deck_generator():
     return deck
 
 def take_cards(deck, counter):
+    '''
+    Taking cards take_cards(deck, counter)
+    '''
     cards = []
     while deck and counter != 0:
         cards.append(deck.pop(-1))
@@ -31,6 +37,9 @@ def take_cards(deck, counter):
     return cards
 
 def is_set(cards):
+    '''
+    Set verificaton is_set(cards)
+    '''
     if len(cards) != set_number: return False
     confirm = True
     for feature in features:
@@ -43,6 +52,9 @@ def is_set(cards):
     return confirm
 
 def search_set(cards):
+    '''
+    Set searching search_set(cards)
+    '''
     ids = []
     sets = []
     n = len(cards)
@@ -55,12 +67,18 @@ def search_set(cards):
     return sets, ids
 
 def copy_cards(cards):
+    '''
+    Copying cards copy_cards(cards)
+    '''
     copied_cards = []
     for card in cards:
         copied_cards.append(card.copy())
     return copied_cards
 
 def graph_generator(cards):
+    '''
+    Graph generator graph_generator(cards)
+    '''
     sets = search_set(cards)
     graph = pgv.AGraph()
     graph.add_nodes_from(sets)
@@ -81,6 +99,9 @@ def graph_generator(cards):
     return graph
 
 def topology_sort(graph):
+    '''
+    WTF?
+    '''
     disjointed = 0
     while graph:
         topology = []

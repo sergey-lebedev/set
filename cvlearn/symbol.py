@@ -108,7 +108,7 @@ def classifier(cards, contours, figure_moments):
             (dummy, emmocm) = em.predict(np.array(figure_moments[figure.id]))
             measures = list(emmocm[0])
         else:
-            measures = mocm(figure_moments[figure.id], clusters, figure_moments)
+            measures = em.mocm(figure_moments[figure.id], clusters, figure_moments)
         symbols = {}
         for symbol in symbol_list:
             symbols[symbol] = measures[symbol]

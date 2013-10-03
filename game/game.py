@@ -1,21 +1,28 @@
-import time
+'''
+Set game
+'''
+import set
+import draw
 import pygame
-from set import *
+import random
 
 def interaction(cards):
+    '''
+    Interactive interaction(cards)
+    '''
     width = 90
     height = 117
     is_break = False
     field_state = {'slots': {}, 'selected': []}
     chosen_set = None
     pygame.event.set_blocked(None)
-    pygame.event.set_allowed([MOUSEBUTTONDOWN, QUIT])
-    slots = visualize(cards, field_state)
+    pygame.event.set_allowed([pygame.MOUSEBUTTONDOWN, pygame.QUIT])
+    slots = draw.visualize(cards, field_state)
     while not is_break:
         event = pygame.event.wait()
-        if event.type == QUIT:
+        if event.type == pygame.QUIT:
             exit()
-        elif event.type == MOUSEBUTTONDOWN:
+        elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 (x_pos, y_pos) = pygame.mouse.get_pos()
                 slots = field_state['slots']
@@ -25,16 +32,16 @@ def interaction(cards):
                     if v <= x_pos < v + width and h <= y_pos < h + height:
                         if key in field_state['selected']:
                             field_state['selected'].remove(key)
-                            visualize(cards, field_state)
+                            draw.visualize(cards, field_state)
                         else:
                             if len(field_state['selected']) < set_number:
                                 field_state['selected'].append(key)
-                                visualize(cards, field_state)
+                                draw.visualize(cards, field_state)
                             if len(field_state['selected']) == set_number:
                                 selected_cards = []
                                 for number in field_state['selected']:
                                     selected_cards.append(slots[number]['card'])
-                                if is_set(selected_cards):
+                                if set.is_set(selected_cards):
                                     chosen_set = selected_cards
                                     is_break = True
                                     break
@@ -47,7 +54,7 @@ def interaction(cards):
 
 print 'deck init'
 # deck init
-deck = deck_generator()
+deck = set.deck_generator()
 #print deck
 #print len(deck)
 
@@ -65,18 +72,18 @@ pygame.init()
 sets = []
 # pick up cards
 initial_number_of_cards = 4 * set_number
-cards = take_cards(deck, initial_number_of_cards)
+cards = set.take_cards(deck, initial_number_of_cards)
 while cards or deck:
     print u'\033[2J'
     #print '%d cards in a deck' % len(deck)
 
     # search set
-    sets, card_ids = search_set(cards)
+    sets, card_ids = set.search_set(cards)
     #print sets
     #print 'number of sets: %d' % len(sets)
-    draw_ordered_slots(cards)
+    draw.draw_ordered_slots(cards)
     print 'sets:'
-    ordered_sets(sets)
+    draw.ordered_sets(sets)
     '''
     graph = graph_generator(cards)
 
@@ -90,7 +97,7 @@ while cards or deck:
     print 'disjointed sets: %d' % disjointed
     '''
     chosen_set = interaction(cards)
-    replacement = take_cards(deck, set_number)
+    replacement = set.take_cards(deck, set_number)
 
     if sets and chosen_set:
         if replacement and len(cards) <= initial_number_of_cards:

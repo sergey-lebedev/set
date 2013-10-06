@@ -8,6 +8,7 @@ Classify = classificator.SymbolClassificator()
 DEBUG = False
 
 def forel(elements, values):
+    """FOREL"""
     #print elements
     #print values
     sequence = set(elements)
@@ -32,7 +33,7 @@ def forel(elements, values):
     return clusters
 
 def feature_detector(cards, contours):
-    allwinnames = []
+    """Feature is area ratio"""
     figure_contours = []
     figure_moments = {}
     # collecting figures
@@ -77,6 +78,7 @@ def feature_detector(cards, contours):
     return figure_moments
 
 def classifier(cards, contours, figure_moments):
+    """EM classification"""
     figures_list = []
     metric_type = cv.CV_CONTOURS_MATCH_I2
     max_number = max(map(lambda x: x.description['number'], cards))

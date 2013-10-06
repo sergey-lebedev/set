@@ -55,7 +55,7 @@ def forel_old(hist):
     return clusters
 """
 def forel(figures):
-    r = 0.65
+    r = 0.84
     sequence = set(range(len(figures)))
     #print sequence
     #print figures
@@ -82,6 +82,7 @@ def forel(figures):
     return clusters
 
 def feature_detector(cards, image, contours, graph):
+    """"""
     figures = []
     for card in cards:
         #print card
@@ -151,6 +152,7 @@ def feature_detector(cards, image, contours, graph):
     return figures
 
 def classifier(cards):
+    """"""
     #step no.5
     #cluster hist
     #hists = map(lambda x: x['inner']['hue'], figures)

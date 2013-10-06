@@ -7,6 +7,7 @@ Classify = classificator.ShadingClassificator()
 DEBUG = not False
 
 def mix(hists):
+    """"""
     mixture = []
     for hist in hists:
         for index, value in enumerate(hist):
@@ -19,6 +20,7 @@ def mix(hists):
     return mixture
 
 def prob(hist, em, cluster_num):
+    """"""
     p = [0.0] * cluster_num
     accum = 0.0
     for index, value in enumerate(hist):
@@ -38,7 +40,7 @@ def prob(hist, em, cluster_num):
     return p
 
 def feature_detector(graph, cards, image, contours):
-    figures = {}
+    """"""
     for card in cards:
         card_id = int(card.id)
         ((h, background_lightness, s), background_subimage, mask, x, y, winnames) = plot_intercontour_hist(image, card_id, contours, graph, False)
@@ -114,9 +116,9 @@ def feature_detector(graph, cards, image, contours):
     elif result > ub:
         shading = 'solid'
     '''
-    #return figures
 
 def classifier(cards):
+    """"""
     values = []
     for card in cards:
         for figure in card.figures:

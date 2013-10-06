@@ -5,7 +5,7 @@ import pygraphviz as pgv
 from draw import *
 from pygame.locals import *
 
-__builtin__.set_number = 3
+__builtin__.SET_NUMBER = 3
 color_list = ('red', 'green', 'blue')
 symbol_list = ('diamond', 'squiggle', 'oval')
 shading_list = ('solid', 'striped', 'open')
@@ -40,13 +40,13 @@ def is_set(cards):
     '''
     Set verificaton is_set(cards)
     '''
-    if len(cards) != set_number: return False
+    if len(cards) != SET_NUMBER: return False
     confirm = True
     for feature in features:
         feature_set = set([])
         for card in cards:
             feature_set |= set([card[feature]])
-        if 1 < len(feature_set) < set_number:
+        if 1 < len(feature_set) < SET_NUMBER:
             confirm = False
             break
     return confirm
@@ -58,8 +58,8 @@ def search_set(cards):
     ids = []
     sets = []
     n = len(cards)
-    if n < set_number: return sets, ids
-    for indexes in itertools.combinations(range(n), set_number):
+    if n < SET_NUMBER: return sets, ids
+    for indexes in itertools.combinations(range(n), SET_NUMBER):
         multiplet = [cards[i] for i in indexes]
         if is_set(multiplet):
             ids.append(indexes)

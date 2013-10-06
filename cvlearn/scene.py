@@ -56,7 +56,7 @@ class Scene():
     def feature_detector(self):
         recognized_cards = []
         for card in self.cards:
-            NUMBER = min(len(card.figures), set_number)
+            NUMBER = min(len(card.figures), SET_NUMBER)
             card.description['veracity'] = 1
             card.description['number'] = NUMBER
         # second pass for color detection

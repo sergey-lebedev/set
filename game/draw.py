@@ -85,7 +85,7 @@ def visualize(cards, field_state):
     # pygame screen
     width = 90
     height = 117
-    rows = set_number
+    rows = SET_NUMBER
     cols = len(cards) / rows
     screen = pygame.display.set_mode((width * cols, height * rows))
     pygame.display.set_caption('set')

@@ -93,10 +93,10 @@ def classifier(cards, contours, figure_moments):
     #print centers
     # EM clustering
     n = len(clusters)
-    if n > set_number:
-        n = set_number
-        centers = range(0, set_number)
-        centers = map(lambda x: x * (1.0 / (set_number - 1)), centers)
+    if n > SET_NUMBER:
+        n = SET_NUMBER
+        centers = range(0, SET_NUMBER)
+        centers = map(lambda x: x * (1.0 / (SET_NUMBER - 1)), centers)
     #print centers
     em = cv2.EM(n)
     em.trainE(np.array(values), np.array(centers))

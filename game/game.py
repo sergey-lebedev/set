@@ -34,10 +34,10 @@ def interaction(cards):
                             field_state['selected'].remove(key)
                             draw.visualize(cards, field_state)
                         else:
-                            if len(field_state['selected']) < set_number:
+                            if len(field_state['selected']) < SET_NUMBER:
                                 field_state['selected'].append(key)
                                 draw.visualize(cards, field_state)
-                            if len(field_state['selected']) == set_number:
+                            if len(field_state['selected']) == SET_NUMBER:
                                 selected_cards = []
                                 for number in field_state['selected']:
                                     selected_cards.append(slots[number]['card'])
@@ -71,8 +71,8 @@ pygame.init()
 # game loop
 sets = []
 # pick up cards
-initial_number_of_cards = 4 * set_number
-cards = set.take_cards(deck, initial_number_of_cards)
+INITIAL_NUMBER_OF_CARDS = 4 * SET_NUMBER
+cards = set.take_cards(deck, INITIAL_NUMBER_OF_CARDS)
 while cards or deck:
     print u'\033[2J'
     #print '%d cards in a deck' % len(deck)
@@ -97,10 +97,10 @@ while cards or deck:
     print 'disjointed sets: %d' % disjointed
     '''
     chosen_set = interaction(cards)
-    replacement = set.take_cards(deck, set_number)
+    replacement = set.take_cards(deck, SET_NUMBER)
 
     if sets and chosen_set:
-        if replacement and len(cards) <= initial_number_of_cards:
+        if replacement and len(cards) <= INITIAL_NUMBER_OF_CARDS:
             replacements_list = zip(chosen_set, replacement)
             for (replaceable, replacing) in replacements_list:
                 cards[cards.index(replaceable)] = replacing
@@ -109,7 +109,7 @@ while cards or deck:
                 cards.remove(card)
     else:
         if replacement:
-            cols = len(cards) / set_number
+            cols = len(cards) / SET_NUMBER
             index = 1
             for inserted in replacement:
                 cards.insert(index * (cols + 1) - 1, inserted)

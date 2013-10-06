@@ -1,25 +1,23 @@
-import cv
 import cv2
-import time
-import math
 import random
 import color
 import symbol
 import filters
 import shading
-from find import *
+from find import Figure, Card, Figures
 from plot import *
 from game import set
-from pygraphviz import *
+import pygraphviz
 
 DEBUG = False
 
 def intercontour_gap_processing(image, contours, graph, nodes_on_level, level):
     # intercontour gap
     for node in nodes_on_level[level]:
-        figure_inner_contour_id = int(node)
+        #figure_inner_contour_id = int(node)
         figure_outer_contour_id = int(graph.predecessors(node)[0])
-        (subhists, subimage, mask, winnames) = plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
+        (subhists, subimage, mask, winnames) = \
+        plot_intercontour_hist(image, figure_outer_contour_id, contours, graph)
     return subimage, mask, winnames
 
 def card_processing(image, figure_outer_contour_id, contours, graph):
@@ -28,7 +26,7 @@ def card_processing(image, figure_outer_contour_id, contours, graph):
     plot_intercontour_hist(image, card_inner_contour_id, contours, graph)
 
 def adaptive_threshold(image):
-    winnames = []
+    #winnames = []
     result = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     result = cv2.medianBlur(result, 3)
     #result = cv2.equalizeHist(result)
@@ -38,7 +36,8 @@ def adaptive_threshold(image):
     threshold_type = cv2.THRESH_BINARY_INV
     block_size = 9
     c = 2
-    result = cv2.adaptiveThreshold(result, 255, adaptive_method, threshold_type, block_size, c)
+    result = cv2.adaptiveThreshold(result, 255, adaptive_method, \
+                                   threshold_type, block_size, c)
     cv2.imshow('threshold', result)
     return result
 
@@ -60,23 +59,27 @@ class Scene():
             card.description['veracity'] = 1
             card.description['number'] = NUMBER
         # second pass for color detection
-        #figures = shading.feature_detector(self.graph, self.cards, self.image, self.contours)
+        #figures = shading.feature_detector(self.graph, self.cards, \
+        #                                   self.image, self.contours)
         #self.number_of['shadings'] = shading.classifier(self.cards)
         figures = symbol.feature_detector(self.cards, self.contours)
-        self.number_of['symbols'] = symbol.classifier(self.cards, self.contours, figures)
-        figures = color.feature_detector(self.cards, self.image, self.contours, self.graph)
+        self.number_of['symbols'] = \
+                        symbol.classifier(self.cards, self.contours, figures)
+        figures = color.feature_detector(self.cards, self.image, \
+                                         self.contours, self.graph)
         self.number_of['colors'] = color.classifier(self.cards)
         #print cards
 
     def refining(self):
         #print cards
         cleaning_figures_list = []
-        refined_graph = AGraph(directed=True)
+        refined_graph = pygraphviz.AGraph(directed=True)
         root = 'root'
         refined_graph.add_node(root)
         for card in self.cards:
             card_inner_contour_id = card.id
-            card_outer_contour_id = self.graph.predecessors(card_inner_contour_id)[0]
+            card_outer_contour_id = \
+                            self.graph.predecessors(card_inner_contour_id)[0]
             #print card_outer_contour_id
             refined_graph.add_edge([root, card_outer_contour_id])
             #print card_inner_contour_id
@@ -104,10 +107,11 @@ class Scene():
 
     def find_all_contours(self):
         result = adaptive_threshold(self.image)
-        self.contours, self.hierarchy = cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        (self.contours, self.hierarchy) = \
+                cv2.findContours(result, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     def get_hierarchy_tree(self):
-        self.graph = AGraph(directed=True)
+        self.graph = pygraphviz.AGraph(directed=True)
         root = 'root'
         self.graph.add_node(root)
         sequence = self.hierarchy[0]
@@ -148,7 +152,7 @@ class Scene():
                     parents.append(parent)
                 #print parents
             sequence = parents
-        print '%d card(s) detected'%len(sequence)
+        print '%d card(s) detected'% len(sequence)
         #print cards
         #print sequence
         self.cards = []
@@ -169,7 +173,6 @@ class Scene():
         return veracity
 
     def analysis(self):
-        figures = []
         self.find_cards(self.graph)
         if self.cards:
             self.refining()
@@ -192,7 +195,7 @@ class Scene():
             self.info = []
             for s, ids in pairs:
                 veracity = veracity(self.cards, ids)
-                info.append([veracity, ids, s])
+                self.info.append([veracity, ids, s])
             contour_ids = []
             if card_ids:
                 self.info = sorted(self.info, reverse=True)

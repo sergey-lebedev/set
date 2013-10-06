@@ -4,7 +4,7 @@ import color
 import symbol
 import filters
 import shading
-from find import Figure, Card, Figures
+from find import Figure, Card, Graph
 from plot import *
 from game import set
 import pygraphviz
@@ -137,7 +137,7 @@ class Scene():
         return level
 
     def find_cards(self, graph):
-        (nodes_on_level, difference, figures) = Figures().find(graph)
+        (nodes_on_level, difference, figures) = Graph().find(graph)
         # two equal peaks
         level = self.two_equal_peaks_finder(difference)
         steps = 2

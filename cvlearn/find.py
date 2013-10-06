@@ -1,7 +1,9 @@
+"""Module for processing cards and figures"""
 import cv
 
 class Figure():
-    def __init__(self, *args, **kwargs):
+    """Figure object description"""
+    def __init__(self, **kwargs):
         self.id = kwargs['id']
         self.border = {}
         self.inner = {}
@@ -9,8 +11,9 @@ class Figure():
         self.winnames = []
 
     def plot(self, image, color):
+        """Plotting figure plot(self, image, color)"""
         mask = cv.fromarray(self.description['mask'])
-        background = cv.fromarray(image.copy())
+        #background = cv.fromarray(image.copy())
         #print cv.GetSize(background)
         (width, height) = cv.GetSize(mask)
         #cv.Set(background, color)
@@ -22,21 +25,28 @@ class Figure():
         cv.ResetImageROI(cv_image)
 
 class Card():
-    def __init__(self, *args, **kwargs):
+    """Card object description, card contains figures"""
+    def __init__(self, **kwargs):
         self.description = {}
         self.id = kwargs['id']
         self.figures = kwargs['figures']
         self.winnames = []
 
     def plot(self, image, colors, feature_type):
+        """Plotting card and nested figures"""
         # plotting card specific
         # plotting figure specific
         color = colors[self.description[feature_type]]
         for figure in self.figures:
             figure.plot(image, color)
 
-class Figures():
+class Graph():
+    """Graph object description"""
+    def __init__(self):
+        pass
+
     def find(self, graph):
+        """Searching figures on graph find(self, graph)"""
         root = 'root'
         queue = [root]
         nodes_on_level = []

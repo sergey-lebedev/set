@@ -1,5 +1,5 @@
+"""Operations with colors"""
 import cv2
-from find import Figure
 import filters
 from plot import *
 import classificator
@@ -7,6 +7,7 @@ Classify = classificator.ColorClassificator()
 
 DEBUG = False
 
+"""
 def roi_old(sequence, c):
     r = 15
     #print 'c: ', c
@@ -21,7 +22,8 @@ def roi_old(sequence, c):
     #print band
     raw_cluster = set(filter(lambda x: Classify.distance(x, c) < r, band))
     return raw_cluster
-
+"""
+"""
 def forel_old(hist):
     elements = range(len(hist))
     #print elements
@@ -51,7 +53,7 @@ def forel_old(hist):
         clusters.append((cluster, hist))
     #print clusters
     return clusters
-
+"""
 def forel(figures):
     r = 0.65
     sequence = set(range(len(figures)))
@@ -105,7 +107,8 @@ def feature_detector(cards, image, contours, graph):
             figure.description['offset_x'] = x
             figure.description['offset_y'] = y
             figure.winnames.extend(winnames)
-            ((h, l, s), subimage, mask, inverted_mask, winnames) = plot_inner_hist(image, outer_contour_id, contours)
+            ((h, l, s), subimage, mask, inverted_mask, winnames) = \
+                        plot_inner_hist(image, outer_contour_id, contours)
             figure.winnames.extend(winnames)
             image_name = str(outer_contour_id)
             #cv2.imshow(image_name, subimage)
@@ -133,7 +136,9 @@ def feature_detector(cards, image, contours, graph):
             #cv2.imshow(image_name + '(full)', subimage)
             #plot_hist_hls(subimage, None, str(outer_contour_id) + '-' + 'p')
             #step no.4
-            ((h, l, s), winnames) = plot_hist_hls(subimage, figure_mask, image_name, normalized=False)
+            ((h, l, s), winnames) = \
+                        plot_hist_hls(subimage, figure_mask, \
+                                      image_name, normalized=False)
             figure.inner['hue'] = h
             figure.inner['lightness'] = l
             figure.inner['saturation'] = s

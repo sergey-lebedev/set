@@ -1,3 +1,4 @@
+"""Operations with shadings"""
 import cv2
 from plot import *
 import classificator

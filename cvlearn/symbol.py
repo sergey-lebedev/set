@@ -1,3 +1,4 @@
+"""Operations with symbols"""
 import cv
 import cv2
 from plot import *
